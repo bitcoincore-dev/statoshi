@@ -54,11 +54,11 @@ GIT_SERVER								:= https://github.com
 export GIT_SERVER
 GIT_REPO_NAME							:= $(PROJECT_NAME)
 export GIT_REPO_NAME
-ifneq ($(GIT_PROFILE),)
+ifneq ($(PROFILE),)
 #USAGE EXAMPLE: make init profile=jlopp
-GIT_PROFILE								:= $(profile)
-export GIT_PROFILE
+PROFILE								:= $(profile)
 endif
+export PROFILE
 GIT_BRANCH								:= $(shell git rev-parse --abbrev-ref HEAD)
 export GIT_BRANCH
 GIT_HASH								:= $(shell git rev-parse --short HEAD)
@@ -80,6 +80,7 @@ DATADIR									:= $(HOME)/.statoshi
 else
 DATADIR									:= $(datadir)
 endif
+export DATADIR
 ifeq ($(nocache),true)
 NOCACHE									:= --no-cache
 else
@@ -92,6 +93,12 @@ else
 VERBOSE									:=	
 endif
 export VERBOSE
+ifeq ($(port),)
+PUBLIC_PORT								:= 80
+else
+PUBLIC_PORT								:= $(port)
+endif
+export PUBLIC_PORT
 ifeq ($(nodeport),)
 NODE_PORT								:= 8333
 else
@@ -173,7 +180,7 @@ report:
 	@echo '        - GIT_USER_NAME=${GIT_USER_NAME}'
 	@echo '        - GIT_USER_EMAIL=${GIT_USER_EMAIL}'
 	@echo '        - GIT_SERVER=${GIT_SERVER}'
-	@echo '        - GIT_PROFILE=${GIT_PROFILE}'
+	@echo '        - PROFILE=${PROFILE}'
 	@echo '        - GIT_BRANCH=${GIT_BRANCH}'
 	@echo '        - GIT_HASH=${GIT_HASH}'
 	@echo '        - GIT_PREVIOUS_HASH=${GIT_PREVIOUS_HASH}'
@@ -253,7 +260,7 @@ endif
 .PHONY: signin
 signin:
 	bash -c 'cat ~/GH_TOKEN.txt | docker login ghcr.io -u RandyMcMillan --password-stdin'
-	docker tag $(PROJECT_NAME):header-$(HOST_USER) $(PACKAGE_PREFIX)/$(GIT_PROFILE)/$(PROJECT_NAME)/$(ARCH)/header-$(HOST_USER)
+	docker tag $(PROJECT_NAME):$(HOST_USER) $(PACKAGE_PREFIX)/$(PROFILE)/$(PROJECT_NAME)/$(ARCH)/$(HOST_USER)
 
 .PHONY: build
 build:
@@ -266,11 +273,13 @@ run: init
 	@echo 'run'
 ifeq ($(CMD_ARGUMENTS),)
 	@echo ''
-	$(DOCKER_COMPOSE) $(VERBOSE) -p $(PROJECT_NAME)_$(HOST_UID) run -d --publish 8125:8125 --publish 8126:8126 --publish 8333:8333 --publish 8332:8332 statoshi sh
+	$(DOCKER_COMPOSE) $(VERBOSE) -p $(PROJECT_NAME)_$(HOST_UID) run -d statoshi sh
+	#$(DOCKER_COMPOSE) $(VERBOSE) -p $(PROJECT_NAME)_$(HOST_UID) run -d --publish 8125:8125 --publish 8126:8126 --publish 8333:8333 --publish 8332:8332 statoshi sh
 	@echo ''
 else
 	@echo ''
-	$(DOCKER_COMPOSE) $(VERBOSE) -p $(PROJECT_NAME)_$(HOST_UID) run -d --publish 8125:8125 --publish 8126:8126 --publish 8333:8333 --publish 8332:8332 statoshi sh -c "$(CMD_ARGUMENTS)"
+	$(DOCKER_COMPOSE) $(VERBOSE) -p $(PROJECT_NAME)_$(HOST_UID) run -d statoshi sh -c "$(CMD_ARGUMENTS)"
+	#$(DOCKER_COMPOSE) $(VERBOSE) -p $(PROJECT_NAME)_$(HOST_UID) run -d --publish 8125:8125 --publish 8126:8126 --publish 8333:8333 --publish 8332:8332 statoshi sh -c "$(CMD_ARGUMENTS)"
 	@echo ''
 endif
 #######################
@@ -296,9 +305,6 @@ clean:
 	@$(DOCKER_COMPOSE) -p $(PROJECT_NAME)_$(HOST_UID) down --remove-orphans --rmi all 2>/dev/null \
 	&& echo 'Image(s) for "$(PROJECT_NAME):$(HOST_USER)" removed.' \
 	|| echo 'Image(s) for "$(PROJECT_NAME):$(HOST_USER)" already removed.'
-	@rm -f $(DOCKERFILE)*
-	@rm -f shell
-	@rm -f torproxy
 	@rm -f Makefile
 #######################
 .PHONY: prune
@@ -335,8 +341,7 @@ push:
 	#bash -c "git add README.md docker/README.md docker/DOCKER.md *.md docker/*.md || echo failed to add docs..."
 	#bash -c "git commit --amend --no-edit --allow-empty -m '$(GIT_HASH)'          || echo failed to commit --amend --no-edit"
 	#bash -c "git commit         --no-edit --allow-empty -m '$(GIT_PREVIOUS_HASH)' || echo failed to commit --amend --no-edit"
-	bash -c "git push -f --all git@github.com:$(GIT_PROFILE)/$(PROJECT_NAME).git || echo failed to push docs"
-	bash -c "git push -f --all git@github.com:bitcoincore-dev/statoshi.host.git || echo failed to push to statoshi.host"
+	bash -c "git push -f --all git@github.com:$(PROFILE)/$(PROJECT_NAME).git || echo failed to push docs"
 .PHONY: push-docs
 push-docs: docs push
 	@echo 'push-docs'
@@ -344,19 +349,19 @@ push-docs: docs push
 package-statoshi: init
 	#@echo "legit . -m "$(HOST_USER):$(TIME)" -p 0000000 && make user=root package && GPF"
 	bash -c 'cat ~/GH_TOKEN.txt | docker login ghcr.io -u RandyMcMillan --password-stdin'
-	bash -c 'docker tag $(PROJECT_NAME):$(HOST_USER) ghcr.io/$(GIT_PROFILE)/$(DOCKERFILE)/$(HOST_USER):$(TIME)'
-	bash -c 'docker push                             ghcr.io/$(GIT_PROFILE)/$(DOCKERFILE)/$(HOST_USER):$(TIME)'
-	bash -c 'docker tag $(PROJECT_NAME):$(HOST_USER) ghcr.io/$(GIT_PROFILE)/$(DOCKERFILE)/$(HOST_USER)'
-	bash -c 'docker push                             ghcr.io/$(GIT_PROFILE)/$(DOCKERFILE)/$(HOST_USER)'
+	bash -c 'docker tag $(PROJECT_NAME):$(HOST_USER) ghcr.io/$(PROFILE)/$(DOCKERFILE)/$(HOST_USER):$(TIME)'
+	bash -c 'docker push                             ghcr.io/$(PROFILE)/$(DOCKERFILE)/$(HOST_USER):$(TIME)'
+	bash -c 'docker tag $(PROJECT_NAME):$(HOST_USER) ghcr.io/$(PROFILE)/$(DOCKERFILE)/$(HOST_USER)'
+	bash -c 'docker push                             ghcr.io/$(PROFILE)/$(DOCKERFILE)/$(HOST_USER)'
 package-statoshi: signin
 
 	touch TIME && echo $(TIME) > TIME && git add -f TIME
 	#legit . -m "make package-header at $(TIME)" -p 00000
 	git commit --amend --no-edit --allow-empty
-	bash -c 'docker tag $(PROJECT_NAME):$(HOST_USER) $(PACKAGE_PREFIX)/$(GIT_PROFILE)/$(PROJECT_NAME)/$(ARCH)/$(HOST_USER):$(TIME)'
-	bash -c 'docker push                             $(PACKAGE_PREFIX)/$(GIT_PROFILE)/$(PROJECT_NAME)/$(ARCH)/$(HOST_USER):$(TIME)'
-	bash -c 'docker tag $(PROJECT_NAME):$(HOST_USER) $(PACKAGE_PREFIX)/$(GIT_PROFILE)/$(PROJECT_NAME)/$(ARCH)/$(HOST_USER)' #defaults to latest
-	bash -c 'docker push                             $(PACKAGE_PREFIX)/$(GIT_PROFILE)/$(PROJECT_NAME)/$(ARCH)/$(HOST_USER)'
+	bash -c 'docker tag $(PROJECT_NAME):$(HOST_USER) $(PACKAGE_PREFIX)/$(PROFILE)/$(PROJECT_NAME)/$(ARCH)/$(HOST_USER):$(TIME)'
+	bash -c 'docker push                             $(PACKAGE_PREFIX)/$(PROFILE)/$(PROJECT_NAME)/$(ARCH)/$(HOST_USER):$(TIME)'
+	bash -c 'docker tag $(PROJECT_NAME):$(HOST_USER) $(PACKAGE_PREFIX)/$(PROFILE)/$(PROJECT_NAME)/$(ARCH)/$(HOST_USER)' #defaults to latest
+	bash -c 'docker push                             $(PACKAGE_PREFIX)/$(PROFILE)/$(PROJECT_NAME)/$(ARCH)/$(HOST_USER)'
 
 ########################
 .PHONY: package-all
