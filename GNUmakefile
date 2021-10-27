@@ -257,6 +257,12 @@ ifneq ($(shell id -u),0)
 endif
 	@echo ''
 #######################
+#.PHONY: autogen
+#autogen-:
+#	./autogen.sh
+#.PHONY: configure
+#configure-:
+#	./configure  --disable-wallet --disable-tests --disable-hardening --disable-man --enable-util-cli --enable-util-tx --with-gui=no --without-miniupnpc --disable-bench
 .PHONY: signin
 signin:
 	bash -c 'cat ~/GH_TOKEN.txt | docker login ghcr.io -u RandyMcMillan --password-stdin'
@@ -320,7 +326,7 @@ prune-network:
 	docker network prune -f
 #######################
 .PHONY: docs
-docs:
+docs-:
 #$ make report no-cache=true verbose=true cmd='make doc' user=root doc
 #SHELL := /bin/bash
 	@echo 'docs'
@@ -346,22 +352,21 @@ push:
 push-docs: docs push
 	@echo 'push-docs'
 #######################
-package-statoshi: init
+package-statoshi: init signin
 	#@echo "legit . -m "$(HOST_USER):$(TIME)" -p 0000000 && make user=root package && GPF"
 	bash -c 'cat ~/GH_TOKEN.txt | docker login ghcr.io -u RandyMcMillan --password-stdin'
 	bash -c 'docker tag $(PROJECT_NAME):$(HOST_USER) ghcr.io/$(PROFILE)/$(DOCKERFILE)/$(HOST_USER):$(TIME)'
 	bash -c 'docker push                             ghcr.io/$(PROFILE)/$(DOCKERFILE)/$(HOST_USER):$(TIME)'
 	bash -c 'docker tag $(PROJECT_NAME):$(HOST_USER) ghcr.io/$(PROFILE)/$(DOCKERFILE)/$(HOST_USER)'
 	bash -c 'docker push                             ghcr.io/$(PROFILE)/$(DOCKERFILE)/$(HOST_USER)'
-package-statoshi: signin
-
-	touch TIME && echo $(TIME) > TIME && git add -f TIME
-	#legit . -m "make package-header at $(TIME)" -p 00000
-	git commit --amend --no-edit --allow-empty
-	bash -c 'docker tag $(PROJECT_NAME):$(HOST_USER) $(PACKAGE_PREFIX)/$(PROFILE)/$(PROJECT_NAME)/$(ARCH)/$(HOST_USER):$(TIME)'
-	bash -c 'docker push                             $(PACKAGE_PREFIX)/$(PROFILE)/$(PROJECT_NAME)/$(ARCH)/$(HOST_USER):$(TIME)'
-	bash -c 'docker tag $(PROJECT_NAME):$(HOST_USER) $(PACKAGE_PREFIX)/$(PROFILE)/$(PROJECT_NAME)/$(ARCH)/$(HOST_USER)' #defaults to latest
-	bash -c 'docker push                             $(PACKAGE_PREFIX)/$(PROFILE)/$(PROJECT_NAME)/$(ARCH)/$(HOST_USER)'
+#
+#	touch TIME && echo $(TIME) > TIME && git add -f TIME
+#	#legit . -m "make package-header at $(TIME)" -p 00000
+#	git commit --amend --no-edit --allow-empty
+#	bash -c 'docker tag $(PROJECT_NAME):$(HOST_USER) $(PACKAGE_PREFIX)/$(PROFILE)/$(PROJECT_NAME)/$(ARCH)/$(HOST_USER):$(TIME)'
+#	bash -c 'docker push                             $(PACKAGE_PREFIX)/$(PROFILE)/$(PROJECT_NAME)/$(ARCH)/$(HOST_USER):$(TIME)'
+#	bash -c 'docker tag $(PROJECT_NAME):$(HOST_USER) $(PACKAGE_PREFIX)/$(PROFILE)/$(PROJECT_NAME)/$(ARCH)/$(HOST_USER)' #defaults to latest
+#	bash -c 'docker push                             $(PACKAGE_PREFIX)/$(PROFILE)/$(PROJECT_NAME)/$(ARCH)/$(HOST_USER)'
 
 ########################
 .PHONY: package-all

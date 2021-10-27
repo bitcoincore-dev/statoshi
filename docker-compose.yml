@@ -60,6 +60,8 @@ services:
     volumes:
       - ${HOME:-.}:/home/${HOST_USER}:consistent
       - ${HOME:-.}/.statoshi:/home/${HOST_USER}/.bitcoin:consistent
+        #- ${PWD:-.}:/home/${HOST_USER}/${PROJECT_NAME}:consistent
+      - ${PWD:-.}:/tmp:consistent
     ports:
        #hostPORT:imagePORT
      - "8332:8332"

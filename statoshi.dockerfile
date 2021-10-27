@@ -22,7 +22,7 @@ RUN apk ${VERBOSE} ${NOCACHE} --update add \
     libtool \
     linux-headers \
     make \
-    mingw-w64-gcc \
+    #mingw-w64-gcc \
     miniupnpc-dev \
     #musl \
     patch \
@@ -42,8 +42,11 @@ RUN apk ${VERBOSE} ${NOCACHE} --update add \
 #ENV PROFILE=${PROFILE}
 #ENV PROJECT_NAME=${PROJECT_NAME}
 ############################
+RUN  mkdir -p /root/.bitcoin
 WORKDIR /tmp
+RUN ls -a
 COPY . /tmp
+RUN ls -a
 COPY ./src/statsd_client.h   /usr/local/include/
 COPY ./src/statsd_client.cpp /usr/local/include/
 ############################
@@ -53,18 +56,19 @@ FROM set-initial-env as make-depends
 ############################
 FROM make-depends as autogen
 ############################
-WORKDIR /tmp
-RUN  ./autogen.sh
+COPY ./conf/usr/local/bin/blocknotify /etc/periodic/15min/blocknotify
+COPY ./conf/bitcoin.conf /root/.bitcoin/bitcoin.conf
+RUN  /tmp/autogen.sh
 #########################
 FROM autogen as configure
 #########################
 WORKDIR /tmp
-RUN ./configure --disable-wallet --disable-tests --disable-hardening --disable-man --enable-util-cli --enable-util-tx --with-gui=no --without-miniupnpc --disable-bench
+RUN /tmp/configure --disable-wallet --disable-tests --disable-hardening --disable-man --enable-util-cli --enable-util-tx --with-gui=no --without-miniupnpc --disable-bench
 ######################
 FROM configure as make
 ######################
 WORKDIR /tmp
-RUN make -f Makefile -j $(nproc)
+RUN make -f Makefile install
 RUN mkdir -p /usr/local/bin/
 ######################
 FROM make as install
@@ -127,13 +131,13 @@ RUN git clone ${statsd_repo} \
 FROM install-statsd as config-statsd
 #######################
 ENV STATSD_INTERFACE tcp/udp
-COPY --from=config-statsd /opt /opt
-COPY --from=config-statsd /usr /usr
-COPY --from=config-statsd /etc /etc
+#COPY --from=config-statsd /opt /opt
+#COPY --from=config-statsd /usr /usr
+#COPY --from=config-statsd /etc /etc
 #COPY conf/opt/statsd/config/ /opt/defaultconf/statsd/config/
 #COPY conf /
 
-VOLUME ["/etc/nginx", "/opt/statsd/config", ""${DATADIR}"]
+#VOLUME ["/etc/nginx", "/opt/statsd/config", "${DATADIR}"]
 
 RUN df -H
 #######################
@@ -147,10 +151,6 @@ RUN pip3 install pyzmq
 ###########################
 FROM config-final as statoshi
 ###########################
-
-RUN  mkdir -p /root/.bitcoin
-COPY conf/usr/local/bin/blocknotify /etc/periodic/15min/blocknotify
-COPY conf/bitcoin.conf /root/.bitcoin/bitcoin.conf
 
 ###########################
 # Micro containers may not be able to compile from source - signed binaries verified here
