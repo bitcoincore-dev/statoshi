@@ -268,8 +268,8 @@ signin:
 	bash -c 'cat ~/GH_TOKEN.txt | docker login ghcr.io -u RandyMcMillan --password-stdin'
 	docker tag $(PROJECT_NAME):$(HOST_USER) $(PACKAGE_PREFIX)/$(PROFILE)/$(PROJECT_NAME)/$(ARCH)/$(HOST_USER)
 
-.PHONY: build
-build:
+.PHONY: build-docker
+build-docker:
 	@echo 'build'
 	$(DOCKER_COMPOSE) $(VERBOSE) build $(NOCACHE) statoshi
 	@echo ''
