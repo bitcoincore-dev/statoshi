@@ -79,7 +79,3 @@ jobs:
           #make install verbose=true
           #make uninstall
 
-      - name: uninstall
-        run: |
-          make uninstall
-
