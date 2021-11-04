@@ -54,8 +54,10 @@ GIT_SERVER								:= https://github.com
 export GIT_SERVER
 GIT_REPO_NAME							:= $(PROJECT_NAME)
 export GIT_REPO_NAME
-ifneq ($(PROFILE),)
+ifeq ($(profile),)
 #USAGE EXAMPLE: make init profile=jlopp
+PROFILE								:= bitcoincore-dev
+else
 PROFILE								:= $(profile)
 endif
 export PROFILE
@@ -372,7 +374,7 @@ package-statoshi: init signin
 
 ########################
 .PHONY: package-all
-package-all: init signin header build package-header package-statoshi
+package-all: init signin package-statoshi
 
 ifeq ($(slim),true)
 	make package-all slim=false
