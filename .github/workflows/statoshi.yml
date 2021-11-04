@@ -40,10 +40,10 @@ jobs:
         uses: actions/checkout@v2
       - name: install, build, and test
         run: |
-          sudo apt install python python3 build-essential g++ python-dev autotools-dev libicu-dev libbz2-dev libboost-all-dev
-          sudo apt install -y mkdocs
           make init
-          make build
+          make build-docker
+          #sudo apt install python python3 build-essential g++ python-dev autotools-dev libicu-dev libbz2-dev libboost-all-dev
+          #sudo apt install -y mkdocs
           #./autogen.sh
           #./configure --without-bdb
           #pip install -r docs/requirements.txt
@@ -66,10 +66,10 @@ jobs:
           make init help report
       - name: install, build, and test
         run: |
-          sudo apt install python python3 build-essential g++ python-dev autotools-dev libicu-dev libbz2-dev libboost-all-dev
-          sudo apt install -y mkdocs
           make init
-          make build
+          make build-docker
+          #sudo apt install python python3 build-essential g++ python-dev autotools-dev libicu-dev libbz2-dev libboost-all-dev
+          #sudo apt install -y mkdocs
           #./autogen.sh
           #./configure --without-bdb
           #pip install -r docs/requirements.txt
