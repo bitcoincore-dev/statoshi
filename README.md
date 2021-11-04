@@ -34,3 +34,39 @@ A system metrics daemon is available [here](https://github.com/jlopp/bitcoin-uti
 Statoshi also supports running multiple nodes that emit metrics to a single graphite instance.
 In order to facilitate this, you can add a line to bitcoin.conf that will partition each
 metric by the name of the host: statshostname=yourNodeName
+
+----
+## [statoshi](https://github.com//statoshi) [e2e471d20](https://github.com//statoshi/commit/e2e471d20)
+##### &#36; <code>make</code>
+
+	[USAGE]:	make [BUILD] run [EXTRA_ARGUMENTS]	
+
+		make init header build user=root uid=0 nocache=false verbose=true
+
+	[DEV ENVIRONMENT]:	
+
+		make build  user=root
+		make run    user=root
+		make shell  user=root
+
+	[EXTRA_ARGUMENTS]:	set build variables	
+
+		nocache=true
+		            	add --no-cache to docker command and apk add 
+
+		nodeport=integer
+		            	set NODE_PORT default 8333
+
+		            	TODO
+
+	[DOCKER COMMANDS]:	push a command to the container	
+
+		cmd=command 	
+		cmd="command"	
+		             	send CMD_ARGUMENTS to the [TARGET]
+
+	[EXAMPLE]:
+
+		make all run user=root uid=0 no-cache=true verbose=true
+		make report build run user=root uid=0 no-cache=true verbose=true cmd="top"
+

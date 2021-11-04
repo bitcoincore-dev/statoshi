@@ -326,20 +326,22 @@ prune-network:
 	docker network prune -f
 #######################
 .PHONY: docs
-docs-:
+docs:
 #$ make report no-cache=true verbose=true cmd='make doc' user=root doc
 #SHELL := /bin/bash
 	@echo 'docs'
-	bash -c "if pgrep MacDown; then pkill MacDown; fi"
-	bash -c "curl https://raw.githubusercontent.com/jlopp/statoshi/master/README.md -o ./docker/README.md"
-	bash -c "cat ./docker/README.md >  README.md"
-	bash -c "cat ./docker/DOCKER.md >> README.md"
+	#bash -c "if pgrep MacDown; then pkill MacDown; fi"
+	bash -c "touch $(PWD)/docker/README.md"
+	curl -o $(PWD)/docker/README.md  https://raw.githubusercontent.com/jlopp/statoshi/master/README.md
+	bash -c "cat $(PWD)/docker/README.md"
+	bash -c "cat $(PWD)/docker/README.md >  README.md"
+	bash -c "cat $(PWD)/docker/DOCKER.md >> README.md"
 #	bash -c "echo '<insert string>' >> README.md"
 	bash -c "echo '----' >> README.md"
 	bash -c "echo '## [$(PROJECT_NAME)]($(GIT_SERVER)/$(GIT_PROFILE)/$(PROJECT_NAME)) [$(GIT_HASH)]($(GIT_SERVER)/$(GIT_PROFILE)/$(PROJECT_NAME)/commit/$(GIT_HASH))' >> README.md"
 	bash -c "echo '##### &#36; <code>make</code>' >> README.md"
 	bash -c "make help >> README.md"
-	bash -c "if hash open 2>/dev/null; then open README.md; fi || echo failed to open README.md"
+	#bash -c "if hash open 2>/dev/null; then open README.md; fi || echo failed to open README.md"
 .PHONY: push
 push:
 	@echo 'push'
@@ -382,6 +384,6 @@ endif
 .PHONY: automate
 automate:
 	./.github/workflows/automate.sh
--include funcs.mk
+#-include funcs.mk
 -include Makefile
 
