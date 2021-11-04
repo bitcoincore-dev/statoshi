@@ -120,6 +120,7 @@ FROM install as install-statsd
 #    zlib-dev \
 #    py3-setuptools
 # install statsd (as we have to use this ugly way)
+RUN apk add nodejs npm
 ARG statsd_version=0.8.6
 ARG statsd_repo=https://github.com/statsd/statsd.git
 WORKDIR /opt
@@ -145,6 +146,7 @@ FROM config-statsd as config-final
 STOPSIGNAL SIGHUP
 #RUN make -j $(nproc) install -C ${REPO}/depends
 RUN apk add libzmq
+RUN /usr/bin/python3.8 -m pip install --upgrade pip
 RUN pip3 install pyzmq
 ###########################
 FROM config-final as statoshi
