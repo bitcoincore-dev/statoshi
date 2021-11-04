@@ -73,12 +73,16 @@ RUN make -f Makefile install
 RUN mkdir -p /usr/local/bin/
 ######################
 FROM make as install
+######################
 WORKDIR /tmp/statoshi
 RUN make install
 ######################
 EXPOSE 80 2003-2004 2013-2014 2023-2024 3000 8080 8118 8333 8332 18333 8125 8125/udp 8126 9050 9051
 ######################
-FROM install as install-statsd
+FROM ${BASE_IMAGE} as install-statsd
+COPY --from=install /usr /usr
+COPY --from=install /etc /etc
+COPY --from=install /root/.bitcoin /root/.bitcoin
 #RUN apk update && apk upgrade
 #RUN apk add ${VERBOSE} ${NOCACHE} \
 #    autoconf \
