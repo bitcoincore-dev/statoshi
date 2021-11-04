@@ -43,9 +43,9 @@ RUN apk ${VERBOSE} ${NOCACHE} --update add \
 #ENV PROJECT_NAME=${PROJECT_NAME}
 ############################
 RUN  mkdir -p /root/.bitcoin
-WORKDIR /tmp
+WORKDIR /tmp/statoshi
 RUN ls -a
-COPY . /tmp
+COPY . /tmp/statoshi
 RUN ls -a
 COPY ./src/statsd_client.h   /usr/local/include/
 COPY ./src/statsd_client.cpp /usr/local/include/
@@ -56,23 +56,24 @@ FROM set-initial-env as make-depends
 ############################
 FROM make-depends as autogen
 ############################
+WORKDIR /tmp/statoshi
 COPY ./conf/usr/local/bin/blocknotify /etc/periodic/15min/blocknotify
 COPY ./conf/bitcoin.conf /root/.bitcoin/bitcoin.conf
-RUN  /tmp/autogen.sh
+RUN  ./autogen.sh
 #########################
 FROM autogen as configure
 #########################
-WORKDIR /tmp
-RUN /tmp/configure --disable-wallet --disable-tests --disable-hardening --disable-man --enable-util-cli --enable-util-tx --with-gui=no --without-miniupnpc --disable-bench
+WORKDIR /tmp/statoshi
+RUN ./configure --disable-wallet --disable-tests --disable-hardening --disable-man --enable-util-cli --enable-util-tx --with-gui=no --without-miniupnpc --disable-bench
 ######################
 FROM configure as make
 ######################
-WORKDIR /tmp
+WORKDIR /tmp/statoshi
 RUN make -f Makefile install
 RUN mkdir -p /usr/local/bin/
 ######################
 FROM make as install
-WORKDIR /tmp
+WORKDIR /tmp/statoshi
 RUN make install
 ######################
 EXPOSE 80 2003-2004 2013-2014 2023-2024 3000 8080 8118 8333 8332 18333 8125 8125/udp 8126 9050 9051
@@ -118,7 +119,6 @@ FROM install as install-statsd
 #    tiff-tools \
 #    zlib-dev \
 #    py3-setuptools
-RUN df -H
 # install statsd (as we have to use this ugly way)
 ARG statsd_version=0.8.6
 ARG statsd_repo=https://github.com/statsd/statsd.git
@@ -139,12 +139,10 @@ ENV STATSD_INTERFACE tcp/udp
 
 #VOLUME ["/etc/nginx", "/opt/statsd/config", "${DATADIR}"]
 
-RUN df -H
 #######################
 FROM config-statsd as config-final
 #######################
 STOPSIGNAL SIGHUP
-RUN df -H
 #RUN make -j $(nproc) install -C ${REPO}/depends
 RUN apk add libzmq
 RUN pip3 install pyzmq
@@ -163,6 +161,6 @@ FROM config-final as statoshi
 #RUN gpg --verify /usr/local/bin/bitcoind.gpg    /usr/local/bin/bitcoind
 #RUN gpg --verify /usr/local/bin/bitcoin-cli.gpg /usr/local/bin/bitcoin-cli
 #RUN gpg --verify /usr/local/bin/bitcoin-tx.gpg  /usr/local/bin/bitcoin-tx
-#RUN df -H
 #ENTRYPOINT ["entrypoint"]
 CMD ["bitcoind", "-daemon", "&", "wait 10", "&"]
+
