@@ -168,5 +168,5 @@ FROM config-final as statoshi
 #RUN gpg --verify /usr/local/bin/bitcoin-cli.gpg /usr/local/bin/bitcoin-cli
 #RUN gpg --verify /usr/local/bin/bitcoin-tx.gpg  /usr/local/bin/bitcoin-tx
 #ENTRYPOINT ["entrypoint"]
-CMD ["bitcoind", "-daemon", "&", "wait 10", "&"]
+CMD ["bitcoind"]
 
