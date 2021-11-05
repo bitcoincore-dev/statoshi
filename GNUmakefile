@@ -359,10 +359,10 @@ push-docs: docs push
 package-statoshi: init signin
 	#@echo "legit . -m "$(HOST_USER):$(TIME)" -p 0000000 && make user=root package && GPF"
 	bash -c 'cat ~/GH_TOKEN.txt | docker login ghcr.io -u RandyMcMillan --password-stdin'
-	bash -c 'docker tag $(PROJECT_NAME):$(HOST_USER) ghcr.io/$(PROFILE)/$(DOCKERFILE)/$(HOST_USER):$(TIME)'
-	bash -c 'docker push                             ghcr.io/$(PROFILE)/$(DOCKERFILE)/$(HOST_USER):$(TIME)'
-	bash -c 'docker tag $(PROJECT_NAME):$(HOST_USER) ghcr.io/$(PROFILE)/$(DOCKERFILE)/$(HOST_USER)'
-	bash -c 'docker push                             ghcr.io/$(PROFILE)/$(DOCKERFILE)/$(HOST_USER)'
+	bash -c 'docker tag $(PROJECT_NAME):$(HOST_USER) ghcr.io/$(PROFILE)/$(PROJECT_NAME)/$(HOST_USER):$(TIME)'
+	bash -c 'docker push                             ghcr.io/$(PROFILE)/$(PROJECT_NAME)/$(HOST_USER):$(TIME)'
+	bash -c 'docker tag $(PROJECT_NAME):$(HOST_USER) ghcr.io/$(PROFILE)/$(PROJECT_NAME)/$(HOST_USER)'
+	bash -c 'docker push                             ghcr.io/$(PROFILE)/$(PROJECT_NAME)/$(HOST_USER)'
 #
 #	touch TIME && echo $(TIME) > TIME && git add -f TIME
 #	#legit . -m "make package-header at $(TIME)" -p 00000
