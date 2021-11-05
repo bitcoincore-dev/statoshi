@@ -2,6 +2,8 @@ ARG BASE_IMAGE=alpine:3.11.6
 #####################################
 FROM ${BASE_IMAGE} as set-initial-env
 #####################################
+LABEL org.opencontainers.image.source https://github.com/${PROFILE_NAME}/${PROJECT_NAME}
+LABEL org.opencontainers.image.description Dockerized Statoshi.info node
 # linux-headers for futex.h in Qt depends build
 # qt5-qttools-dev for lrelease
 RUN apk ${VERBOSE} ${NOCACHE} --update add \
