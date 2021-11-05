@@ -56,14 +56,15 @@ GIT_REPO_NAME							:= $(PROJECT_NAME)
 export GIT_REPO_NAME
 ifeq ($(profile),)
 #USAGE EXAMPLE: make init profile=jlopp
-PROFILE								:= bitcoincore-dev
+GIT_PROFILE								:= bitcoincore-dev
 else
-PROFILE								:= $(profile)
+FIT_PROFILE								:= $(profile)
 endif
-export PROFILE
-GIT_BRANCH								:= $(shell git rev-parse --abbrev-ref HEAD)
+export GIT_PROFILE
+#GIT_BRANCH								:= $(shell git rev-parse --abbrev-ref HEAD)
+GIT_BRANCH								:= $(shell git rev-parse --short HEAD~0)
 export GIT_BRANCH
-GIT_HASH								:= $(shell git rev-parse --short HEAD)
+GIT_HASH								:= $(shell git rev-parse --short HEAD~0)
 export GIT_HASH
 GIT_PREVIOUS_HASH						:= $(shell git rev-parse --short master@{1})
 export GIT_PREVIOUS_HASH
@@ -337,10 +338,11 @@ docs:
 	curl -o $(PWD)/docker/README.md  https://raw.githubusercontent.com/jlopp/statoshi/master/README.md
 	bash -c "cat $(PWD)/docker/README.md"
 	bash -c "cat $(PWD)/docker/README.md >  README.md"
-	bash -c "cat $(PWD)/docker/DOCKER.md >> README.md"
-#	bash -c "echo '<insert string>' >> README.md"
+	bash -c "echo ' ' >> README.md"
+	#bash -c "echo '<insert string>' >> README.md"
 	bash -c "echo '----' >> README.md"
-	bash -c "echo '## [$(PROJECT_NAME)]($(GIT_SERVER)/$(GIT_PROFILE)/$(PROJECT_NAME)) [$(GIT_HASH)]($(GIT_SERVER)/$(GIT_PROFILE)/$(PROJECT_NAME)/commit/$(GIT_HASH))' >> README.md"
+	bash -c "cat $(PWD)/docker/DOCKER.md >> README.md"
+	#bash -c "echo '## [$(PROJECT_NAME)]($(GIT_SERVER)/$(GIT_PROFILE)/$(PROJECT_NAME)) ' >> README.md"
 	bash -c "echo '##### &#36; <code>make</code>' >> README.md"
 	bash -c "make help >> README.md"
 	#bash -c "if hash open 2>/dev/null; then open README.md; fi || echo failed to open README.md"
