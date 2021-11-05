@@ -373,14 +373,10 @@ package-statoshi: init signin
 #	bash -c 'docker push                             $(PACKAGE_PREFIX)/$(PROFILE)/$(PROJECT_NAME)/$(ARCH)/$(HOST_USER)'
 
 ########################
-.PHONY: package-all
-package-all: init signin package-statoshi
+.PHONY: package-build-all
+package-build-all: init signin package-statoshi
 
-ifeq ($(slim),true)
-	make package-all slim=false
-endif
-	make header package-header build package-statoshi
-
+	make build-docker package-statoshi
 
 ########################
 .PHONY: automate
