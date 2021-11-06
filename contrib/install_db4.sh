@@ -63,8 +63,12 @@ http_get() {
 }
 
 mkdir -p "${BDB_PREFIX}"
-http_get "${BDB_URL}" "${BDB_VERSION}.tar.gz" "${BDB_HASH}"
-tar -xzvf ${BDB_VERSION}.tar.gz -C "$BDB_PREFIX"
+if [ -f "${BDB_VERSION}.tar.gz" ]; then
+    tar -xzvf ${BDB_VERSION}.tar.gz -C "$BDB_PREFIX"
+else
+    http_get "${BDB_URL}" "${BDB_VERSION}.tar.gz" "${BDB_HASH}"
+    tar -xzvf ${BDB_VERSION}.tar.gz -C "$BDB_PREFIX"
+fi
 cd "${BDB_PREFIX}/${BDB_VERSION}/"
 
 # Apply a patch necessary when building with clang and c++11 (see https://community.oracle.com/thread/3952592)

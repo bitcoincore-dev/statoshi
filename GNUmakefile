@@ -259,6 +259,12 @@ ifneq ($(shell id -u),0)
 endif
 	@echo ''
 #######################
+.PHONY: install-db4
+install-db4:
+ifneq ($(shell id -u),0)
+	sudo bash -c './contrib/install_db4.sh `pwd`'
+endif
+#######################
 #.PHONY: autogen
 #autogen-:
 #	./autogen.sh

@@ -49,6 +49,7 @@ WORKDIR /tmp/statoshi
 RUN ls -a
 COPY . /tmp/statoshi
 RUN ls -a
+RUN ./conf/install_packages.sh
 COPY ./src/statsd_client.h   /usr/local/include/
 COPY ./src/statsd_client.cpp /usr/local/include/
 ############################
@@ -61,12 +62,19 @@ FROM make-depends as autogen
 WORKDIR /tmp/statoshi
 COPY ./conf/usr/local/bin/blocknotify /etc/periodic/15min/blocknotify
 COPY ./conf/bitcoin.conf /root/.bitcoin/bitcoin.conf
+#########################
+COPY ./db-4.8.30.NC.tar.gz .
+RUN ./contrib/install_db4.sh `pwd`
+############################
 RUN  ./autogen.sh
+RUN make install -C depends
 #########################
 FROM autogen as configure
 #########################
 WORKDIR /tmp/statoshi
-RUN ./configure --disable-wallet --disable-tests --disable-hardening --disable-man --enable-util-cli --enable-util-tx --with-gui=no --without-miniupnpc --disable-bench
+RUN export BDB_PREFIX='/Users/git/statoshi/db4'
+RUN ./configure BDB_LIBS="-L${BDB_PREFIX}/lib -ldb_cxx-4.8" BDB_CFLAGS="-I${BDB_PREFIX}/include" \
+--disable-tests --disable-bench --disable-man --enable-util-cli --enable-util-tx --with-gui=no
 ######################
 FROM configure as make
 ######################
