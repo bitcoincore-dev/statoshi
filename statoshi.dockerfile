@@ -37,6 +37,10 @@ RUN apk ${VERBOSE} ${NOCACHE} --update add \
     valgrind \
     vim \
     zeromq-dev
+RUN apk add libzmq
+RUN /usr/bin/python3.8 -m pip install --upgrade pip
+RUN python3 -m pip install pyzmq
+
 #ARG GIT_SERVER=${GIT_SERVER}
 #ARG PROFILE=${PROFILE}
 #ARG PROJECT_NAME=${PROJECT_NAME}
@@ -151,9 +155,9 @@ FROM config-statsd as config-final
 #######################
 STOPSIGNAL SIGHUP
 #RUN make -j $(nproc) install -C ${REPO}/depends
-RUN apk add libzmq
-RUN /usr/bin/python3.8 -m pip install --upgrade pip
-RUN pip3 install pyzmq
+#RUN apk add libzmq
+#RUN /usr/bin/python3.8 -m pip install --upgrade pip
+#RUN python3 -m pip install pyzmq
 ###########################
 FROM config-final as statoshi
 ###########################
