@@ -1,6 +1,6 @@
-ARG BASE_IMAGE=alpine:3.11.6
+ARG BASE_IMAGE=alpine:3.13
 #####################################
-FROM ${BASE_IMAGE} as set-initial-env
+FROM ${BASE_IMAGE} as header
 #####################################
 LABEL org.opencontainers.image.source https://github.com/${PROFILE_NAME}/${PROJECT_NAME}
 LABEL org.opencontainers.image.description Dockerized Statoshi.info node
@@ -31,64 +31,13 @@ RUN apk ${VERBOSE} ${NOCACHE} --update add \
     perl \
     pkgconfig \
     python3 \
+    python3-dev \
     qt5-qtbase-dev \
     qt5-qttools-dev \
     sqlite \
     valgrind \
     vim \
     zeromq-dev
-RUN apk add libzmq
-RUN /usr/bin/python3.8 -m pip install --upgrade pip
-RUN python3 -m pip install pyzmq
-
-#ARG GIT_SERVER=${GIT_SERVER}
-#ARG PROFILE=${PROFILE}
-#ARG PROJECT_NAME=${PROJECT_NAME}
-#ENV GIT_SERVER=${GIT_SERVER}
-#ENV PROFILE=${PROFILE}
-#ENV PROJECT_NAME=${PROJECT_NAME}
-############################
-RUN  mkdir -p /root/.bitcoin
-WORKDIR /tmp/statoshi
-RUN ls -a
-COPY . /tmp/statoshi
-RUN ls -a
-COPY ./src/statsd_client.h   /usr/local/include/
-COPY ./src/statsd_client.cpp /usr/local/include/
-############################
-FROM set-initial-env as make-depends
-############################
-#RUN make install -C depends
-############################
-FROM make-depends as autogen
-############################
-WORKDIR /tmp/statoshi
-COPY ./conf/usr/local/bin/blocknotify /etc/periodic/15min/blocknotify
-COPY ./conf/bitcoin.conf /root/.bitcoin/bitcoin.conf
-RUN  ./autogen.sh
-#########################
-FROM autogen as configure
-#########################
-WORKDIR /tmp/statoshi
-RUN ./configure --disable-wallet --disable-tests --disable-hardening --disable-man --enable-util-cli --enable-util-tx --with-gui=no --without-miniupnpc --disable-bench
-######################
-FROM configure as make
-######################
-WORKDIR /tmp/statoshi
-RUN make -f Makefile install
-RUN mkdir -p /usr/local/bin/
-######################
-FROM make as install
-######################
-WORKDIR /tmp/statoshi
-RUN make install
-######################
-EXPOSE 80 2003-2004 2013-2014 2023-2024 3000 8080 8118 8333 8332 18333 8125 8125/udp 8126 9050 9051
-######################
-FROM ${BASE_IMAGE} as install-statsd
-COPY --from=install /usr /usr
-COPY --from=install /etc /etc
-COPY --from=install /root/.bitcoin /root/.bitcoin
 #RUN apk update && apk upgrade
 #RUN apk add ${VERBOSE} ${NOCACHE} \
 #    autoconf \
@@ -130,6 +79,57 @@ COPY --from=install /root/.bitcoin /root/.bitcoin
 #    zlib-dev \
 #    py3-setuptools
 # install statsd (as we have to use this ugly way)
+RUN apk add libzmq
+RUN python3 -m ensurepip --upgrade
+RUN python3 -m pip install pyzmq
+
+#ARG GIT_SERVER=${GIT_SERVER}
+#ARG PROFILE=${PROFILE}
+#ARG PROJECT_NAME=${PROJECT_NAME}
+#ENV GIT_SERVER=${GIT_SERVER}
+#ENV PROFILE=${PROFILE}
+#ENV PROJECT_NAME=${PROJECT_NAME}
+############################
+RUN  mkdir -p /root/.bitcoin
+WORKDIR /tmp/statoshi
+COPY . /tmp/statoshi
+COPY ./src/statsd_client.h   /usr/local/include/
+COPY ./src/statsd_client.cpp /usr/local/include/
+############################
+FROM header as build-statoshi
+RUN ls /tmp/statoshi/*
+RUN ls /usr/local/include/*
+############################
+FROM build-statoshi as autogen
+############################
+WORKDIR /tmp/statoshi
+COPY ./conf/usr/local/bin/blocknotify /etc/periodic/15min/blocknotify
+COPY ./conf/bitcoin.conf /root/.bitcoin/bitcoin.conf
+RUN  ./autogen.sh
+#########################
+FROM autogen as configure
+#########################
+WORKDIR /tmp/statoshi
+RUN ./configure --disable-wallet --disable-tests --disable-hardening --disable-man --enable-util-cli --enable-util-tx --with-gui=no --without-miniupnpc --disable-bench
+######################
+FROM configure as make
+######################
+WORKDIR /tmp/statoshi
+RUN make -f Makefile
+######################
+FROM make as install
+######################
+WORKDIR /tmp/statoshi
+RUN mkdir -p /usr/local/bin/
+RUN make -f Makefile install
+######################
+EXPOSE 80 2003-2004 2013-2014 2023-2024 3000 8080 8118 8333 8332 18333 8125 8125/udp 8126 9050 9051
+######################
+FROM install as install-statsd
+######################
+COPY --from=install /usr /usr
+COPY --from=install /etc /etc
+#COPY --from=install /root/.bitcoin /root/.bitcoin
 RUN apk add nodejs npm
 ARG statsd_version=0.8.6
 ARG statsd_repo=https://github.com/statsd/statsd.git
