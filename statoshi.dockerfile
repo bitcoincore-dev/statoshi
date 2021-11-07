@@ -30,6 +30,7 @@ RUN apk ${VERBOSE} ${NOCACHE} --update add \
     patch \
     perl \
     pkgconfig \
+    py3-virtualenv-20.4.7-r0 \
     python3 \
     python3-dev \
     qt5-qtbase-dev \
