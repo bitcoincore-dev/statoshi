@@ -147,8 +147,18 @@ ENV STATSD_INTERFACE tcp/udp
 #COPY --from=config-statsd /etc /etc
 #COPY conf/opt/statsd/config/ /opt/defaultconf/statsd/config/
 #COPY conf /
+
+
+
+
+
+
 ARG DATADIR=${DATADIR}
-VOLUME ["/etc/nginx", "/opt/statsd/config", "${DATADIR}"]
+#VOLUME ["/etc/nginx", "/opt/statsd/config", "${DATADIR}"]
+
+
+
+
 
 #######################
 FROM config-statsd as config-final
