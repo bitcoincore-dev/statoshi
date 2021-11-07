@@ -30,7 +30,8 @@ RUN apk ${VERBOSE} ${NOCACHE} --update add \
     patch \
     perl \
     pkgconfig \
-    py3-virtualenv-20.4.7-r0 \
+    #py3-virtualenv-20.4.7-r0 \
+    py3-virtualenv \
     python3 \
     python3-dev \
     qt5-qtbase-dev \
@@ -126,19 +127,19 @@ RUN make -f Makefile install
 ######################
 EXPOSE 80 2003-2004 2013-2014 2023-2024 3000 8080 8118 8333 8332 18333 8125 8125/udp 8126 9050 9051
 ######################
-FROM install as install-statsd
+FROM graphiteapp/graphite-statsd:latest as install-statsd
 ######################
 COPY --from=install /usr /usr
 COPY --from=install /etc /etc
 #COPY --from=install /root/.bitcoin /root/.bitcoin
 RUN apk add nodejs npm
-ARG statsd_version=0.8.6
-ARG statsd_repo=https://github.com/statsd/statsd.git
-WORKDIR /opt
-RUN git clone ${statsd_repo} \
- && cd /opt/statsd \
- && git checkout tags/v${statsd_version} \
- && npm install
+#ARG statsd_version=0.8.6
+#ARG statsd_repo=https://github.com/statsd/statsd.git
+#WORKDIR /opt
+#RUN git clone ${statsd_repo} \
+# && cd /opt/statsd \
+# && git checkout tags/v${statsd_version} \
+# && npm install
 ######################
 FROM install-statsd as config-statsd
 #######################
