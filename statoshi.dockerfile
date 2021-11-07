@@ -1,4 +1,4 @@
-ARG BASE_IMAGE=alpine:3.13
+ARG BASE_IMAGE=docker.io/graphiteapp/graphite-statsd:latest
 #####################################
 FROM ${BASE_IMAGE} as header
 #####################################
