@@ -39,7 +39,7 @@ shutdown(){
 
   # first shutdown any service started by runit
   for _srv in $(ls -1 /etc/service); do
-    sv force-stop $_srv
+    runsv force-stop $_srv
   done
 
   echo "shutting down runsvdir"
@@ -92,7 +92,7 @@ echo "wait for processes to start...."
 
 sleep 5
 for _srv in $(ls -1 /etc/service); do
-    sv status $_srv
+    runsv status $_srv
 done
 
 # catch shutdown signals
