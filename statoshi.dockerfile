@@ -131,13 +131,13 @@ COPY --from=install /usr /usr
 COPY --from=install /etc /etc
 #COPY --from=install /root/.bitcoin /root/.bitcoin
 RUN apk add nodejs npm
-ARG statsd_version=0.8.6
-ARG statsd_repo=https://github.com/statsd/statsd.git
-WORKDIR /opt
-RUN git clone ${statsd_repo} \
- && cd /opt/statsd \
- && git checkout tags/v${statsd_version} \
- && npm install
+#ARG statsd_version=0.8.6
+#ARG statsd_repo=https://github.com/statsd/statsd.git
+#WORKDIR /opt
+#RUN git clone ${statsd_repo} \
+# && cd /opt/statsd \
+# && git checkout tags/v${statsd_version} \
+# && npm install
 ######################
 FROM install-statsd as config-statsd
 #######################
@@ -148,7 +148,7 @@ ENV STATSD_INTERFACE tcp/udp
 #COPY conf/opt/statsd/config/ /opt/defaultconf/statsd/config/
 #COPY conf /
 
-#VOLUME ["/etc/nginx", "/opt/statsd/config", "${DATADIR}"]
+VOLUME ["/etc/nginx", "/opt/statsd/config", "${DATADIR}"]
 
 #######################
 FROM config-statsd as config-final
