@@ -320,7 +320,7 @@ clean:
 prune:
 	@echo 'prune'
 	$(DOCKER_COMPOSE) -p $(PROJECT_NAME)_$(HOST_UID) down
-	docker system prune -af
+	docker system prune -f
 #######################
 .PHONY: prune-network
 prune-network:
