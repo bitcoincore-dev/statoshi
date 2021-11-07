@@ -58,7 +58,7 @@ ifeq ($(profile),)
 #USAGE EXAMPLE: make init profile=jlopp
 GIT_PROFILE								:= bitcoincore-dev
 else
-FIT_PROFILE								:= $(profile)
+GIT_PROFILE								:= $(profile)
 endif
 export GIT_PROFILE
 #GIT_BRANCH								:= $(shell git rev-parse --abbrev-ref HEAD)
@@ -183,7 +183,7 @@ report:
 	@echo '        - GIT_USER_NAME=${GIT_USER_NAME}'
 	@echo '        - GIT_USER_EMAIL=${GIT_USER_EMAIL}'
 	@echo '        - GIT_SERVER=${GIT_SERVER}'
-	@echo '        - PROFILE=${PROFILE}'
+	@echo '        - GIT_PROFILE=${GIT_PROFILE}'
 	@echo '        - GIT_BRANCH=${GIT_BRANCH}'
 	@echo '        - GIT_HASH=${GIT_HASH}'
 	@echo '        - GIT_PREVIOUS_HASH=${GIT_PREVIOUS_HASH}'
@@ -269,7 +269,7 @@ endif
 .PHONY: signin
 signin:
 	bash -c 'cat ~/GH_TOKEN.txt | docker login ghcr.io -u RandyMcMillan --password-stdin'
-	docker tag $(PROJECT_NAME):$(HOST_USER) $(PACKAGE_PREFIX)/$(PROFILE)/$(PROJECT_NAME)/$(ARCH)/$(HOST_USER)
+	docker tag $(PROJECT_NAME):$(HOST_USER) $(PACKAGE_PREFIX)/$(GIT_PROFILE)/$(PROJECT_NAME)/$(ARCH)/$(HOST_USER)
 
 .PHONY: build-docker
 build-docker:
@@ -353,7 +353,7 @@ push:
 	#bash -c "git add README.md docker/README.md docker/DOCKER.md *.md docker/*.md || echo failed to add docs..."
 	#bash -c "git commit --amend --no-edit --allow-empty -m '$(GIT_HASH)'          || echo failed to commit --amend --no-edit"
 	#bash -c "git commit         --no-edit --allow-empty -m '$(GIT_PREVIOUS_HASH)' || echo failed to commit --amend --no-edit"
-	bash -c "git push -f --all git@github.com:$(PROFILE)/$(PROJECT_NAME).git || echo failed to push docs"
+	bash -c "git push -f --all git@github.com:$(GIT_PROFILE)/$(PROJECT_NAME).git || echo failed to push docs"
 .PHONY: push-docs
 push-docs: docs push
 	@echo 'push-docs'
@@ -361,18 +361,18 @@ push-docs: docs push
 package-statoshi: init signin
 	#@echo "legit . -m "$(HOST_USER):$(TIME)" -p 0000000 && make user=root package && GPF"
 	bash -c 'cat ~/GH_TOKEN.txt | docker login ghcr.io -u RandyMcMillan --password-stdin'
-	bash -c 'docker tag $(PROJECT_NAME):$(HOST_USER) ghcr.io/$(PROFILE)/$(PROJECT_NAME)/$(HOST_USER):$(TIME)'
-	bash -c 'docker push                             ghcr.io/$(PROFILE)/$(PROJECT_NAME)/$(HOST_USER):$(TIME)'
-	bash -c 'docker tag $(PROJECT_NAME):$(HOST_USER) ghcr.io/$(PROFILE)/$(PROJECT_NAME)/$(HOST_USER)'
-	bash -c 'docker push                             ghcr.io/$(PROFILE)/$(PROJECT_NAME)/$(HOST_USER)'
+	bash -c 'docker tag $(PROJECT_NAME):$(HOST_USER) ghcr.io/$(GIT_PROFILE)/$(PROJECT_NAME)/$(ARCH)/$(HOST_USER):$(TIME)'
+	bash -c 'docker push                             ghcr.io/$(GIT_PROFILE)/$(PROJECT_NAME)/$(ARCH)/$(HOST_USER):$(TIME)'
+	bash -c 'docker tag $(PROJECT_NAME):$(HOST_USER) ghcr.io/$(GIT_PROFILE)/$(PROJECT_NAME)/$(ARCH)/$(HOST_USER)'
+	bash -c 'docker push                             ghcr.io/$(GIT_PROFILE)/$(PROJECT_NAME)/$(ARCH)/$(HOST_USER)'
 #
 #	touch TIME && echo $(TIME) > TIME && git add -f TIME
 #	#legit . -m "make package-header at $(TIME)" -p 00000
 #	git commit --amend --no-edit --allow-empty
-#	bash -c 'docker tag $(PROJECT_NAME):$(HOST_USER) $(PACKAGE_PREFIX)/$(PROFILE)/$(PROJECT_NAME)/$(ARCH)/$(HOST_USER):$(TIME)'
-#	bash -c 'docker push                             $(PACKAGE_PREFIX)/$(PROFILE)/$(PROJECT_NAME)/$(ARCH)/$(HOST_USER):$(TIME)'
-#	bash -c 'docker tag $(PROJECT_NAME):$(HOST_USER) $(PACKAGE_PREFIX)/$(PROFILE)/$(PROJECT_NAME)/$(ARCH)/$(HOST_USER)' #defaults to latest
-#	bash -c 'docker push                             $(PACKAGE_PREFIX)/$(PROFILE)/$(PROJECT_NAME)/$(ARCH)/$(HOST_USER)'
+#	bash -c 'docker tag $(PROJECT_NAME):$(HOST_USER) $(PACKAGE_PREFIX)/$(GIT_PROFILE)/$(PROJECT_NAME)/$(ARCH)/$(HOST_USER):$(TIME)'
+#	bash -c 'docker push                             $(PACKAGE_PREFIX)/$(GIT_PROFILE)/$(PROJECT_NAME)/$(ARCH)/$(HOST_USER):$(TIME)'
+#	bash -c 'docker tag $(PROJECT_NAME):$(HOST_USER) $(PACKAGE_PREFIX)/$(GIT_PROFILE)/$(PROJECT_NAME)/$(ARCH)/$(HOST_USER)' #defaults to latest
+#	bash -c 'docker push                             $(PACKAGE_PREFIX)/$(GIT_PROFILE)/$(PROJECT_NAME)/$(ARCH)/$(HOST_USER)'
 
 ########################
 .PHONY: package-build-all
