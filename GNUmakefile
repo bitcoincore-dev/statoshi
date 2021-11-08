@@ -258,14 +258,15 @@ ifneq ($(shell id -u),0)
 	sudo bash -c 'install -v $(PWD)/src/statsd_client.h		    /usr/local/include/statsd_client.h'
 	sudo bash -c 'install -v $(PWD)/src/statsd_client.cpp		/usr/local/include/statsd_client.cpp'
 endif
+	rm -f Makefile
 	@echo ''
 #######################
-#.PHONY: autogen
-#autogen-:
-#	./autogen.sh
-#.PHONY: configure
-#configure-:
-#	./configure  --disable-wallet --disable-tests --disable-hardening --disable-man --enable-util-cli --enable-util-tx --with-gui=no --without-miniupnpc --disable-bench
+.PHONY: local-autogen
+local-autogen:
+	./autogen.sh
+.PHONY: local-configure
+local-configure:
+	./configure  --disable-wallet --disable-tests --disable-hardening --disable-man --enable-util-cli --enable-util-tx --with-gui=no --disable-bench
 .PHONY: signin
 signin:
 	bash -c 'cat ~/GH_TOKEN.txt | docker login ghcr.io -u RandyMcMillan --password-stdin'
