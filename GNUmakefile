@@ -102,6 +102,12 @@ else
 VERBOSE									:=	
 endif
 export VERBOSE
+ifeq ($(fullbuild),true)
+FULLBUILD								:=true
+else
+FULLBUILD								:=false
+endif
+export FULLBUILD
 ifeq ($(port),)
 PUBLIC_PORT								:= 80
 else
@@ -135,6 +141,7 @@ help:
 	@echo '	[USAGE]:	make [BUILD] run [EXTRA_ARGUMENTS]	'
 	@echo ''
 	@echo '		make init'
+	@echo '		make init fullbuild=true'
 	@echo ''
 	@echo '	bitcoin commands:'
 	@echo ''
@@ -264,6 +271,16 @@ host:
 	bash -c './host'
 
 #######################
+.PHONY: fullbuild
+.SILENT:
+fullbuild:
+
+ifeq ($(fullbuild),true)
+	sed 's/\#FULLBUILD//' docker/statoshi.dockerfile > statoshi.dockerfile
+endif
+
+#######################
+#######################
 .PHONY: init
 .SILENT:
 init:
@@ -273,7 +290,11 @@ ifneq ($(shell id -u),0)
 	sudo bash -c 'install -v $(PWD)/src/statsd_client.h		    /usr/local/include/statsd_client.h'
 	sudo bash -c 'install -v $(PWD)/src/statsd_client.cpp		/usr/local/include/statsd_client.cpp'
 endif
+	cat docker/statoshi.dockerfile > statoshi.dockerfile
+	#sed 's/\#FULLBUILD/.\/images/' docker/statoshi.dockerfile > statoshi.dockerfile
+	#sed 's/\#FULLBUILD//' docker/statoshi.dockerfile > statoshi.dockerfile
 	rm -f Makefile
+	make fullbuild
 #######################
 .PHONY: local-autogen
 local-autogen:

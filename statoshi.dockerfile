@@ -38,50 +38,49 @@ RUN apk ${VERBOSE} ${NOCACHE} --update add \
     valgrind \
     vim \
     zeromq-dev
-#RUN apk update && apk upgrade
-#RUN apk add ${VERBOSE} ${NOCACHE} \
-#    autoconf \
-#    automake \
-#    binutils \
-#    ca-certificates \
-#    cmake \
-#    curl \
-#    doxygen \
-#    git \
-#    libtool \
-#    make \
-#    patch \
-#    pkgconfig \
-#    python3 \
-#    py3-psutil \
-#    vim
-#
-#RUN apk add ${VERBOSE} ${NOCACHE} \
-#    g++ \
-#    build-base \
-#    boost-libs \
-#    libgcc \
-#    libstdc++ \
-#    musl \
-#    boost-system \
-#    boost-build \
-#    boost-dev \
-#    openssl-dev \
-#    libevent-dev \
-#    libzmq \
-#    zeromq-dev \
-#    protobuf-dev \
-#    linux-headers \
-#    libbz2 \
-#    libcap-dev \
-#    librsvg \
-#    tiff-tools \
-#    zlib-dev \
-#    py3-setuptools
-# install statsd (as we have to use this ugly way)
-RUN apk add libzmq
-RUN python3 -m ensurepip --upgrade
-RUN python3 -m pip install pyzmq
+RUN apk update && apk upgrade
+#FULLBUILDRUN apk add ${VERBOSE} ${NOCACHE} \
+#FULLBUILD    autoconf \
+#FULLBUILD    automake \
+#FULLBUILD    binutils \
+#FULLBUILD    ca-certificates \
+#FULLBUILD    cmake \
+#FULLBUILD    curl \
+#FULLBUILD    doxygen \
+#FULLBUILD    git \
+#FULLBUILD    libtool \
+#FULLBUILD    make \
+#FULLBUILD    patch \
+#FULLBUILD    pkgconfig \
+#FULLBUILD    python3 \
+#FULLBUILD    py3-psutil \
+#FULLBUILD    vim
+#FULLBUILD
+#FULLBUILDRUN apk add ${VERBOSE} ${NOCACHE} \
+#FULLBUILD    g++ \
+#FULLBUILD    build-base \
+#FULLBUILD    boost-libs \
+#FULLBUILD    libgcc \
+#FULLBUILD    libstdc++ \
+#FULLBUILD    musl \
+#FULLBUILD    boost-system \
+#FULLBUILD    boost-build \
+#FULLBUILD    boost-dev \
+#FULLBUILD    openssl-dev \
+#FULLBUILD    libevent-dev \
+#FULLBUILD    libzmq \
+#FULLBUILD    zeromq-dev \
+#FULLBUILD    protobuf-dev \
+#FULLBUILD    linux-headers \
+#FULLBUILD    libbz2 \
+#FULLBUILD    libcap-dev \
+#FULLBUILD    librsvg \
+#FULLBUILD    tiff-tools \
+#FULLBUILD    zlib-dev \
+#FULLBUILD    py3-setuptools
+#FULLBUILDRUN apk add libzmq
+#FULLBUILDRUN python3 -m ensurepip --upgrade
+#FULLBUILDRUN python3 -m pip install pyzmq
 
 #ARG GIT_SERVER=${GIT_SERVER}
 #ARG PROFILE=${PROFILE}
@@ -92,13 +91,12 @@ RUN python3 -m pip install pyzmq
 ############################
 RUN  mkdir -p /root/.bitcoin
 WORKDIR /tmp/statoshi
-COPY . /tmp/statoshi
-COPY ./src/statsd_client.h   /usr/local/include/
-COPY ./src/statsd_client.cpp /usr/local/include/
+#FULLBUILDCOPY . /tmp/statoshi
+#FULLBUILDCOPY ./src/statsd_client.h   /usr/local/include/
+#FULLBUILDCOPY ./src/statsd_client.cpp /usr/local/include/
 ############################
 FROM header as build-statoshi
-RUN ls /tmp/statoshi/*
-RUN ls /usr/local/include/*
+RUN echo
 ############################
 FROM build-statoshi as autogen
 ############################
@@ -107,23 +105,24 @@ ENV NETWORK=${NETWORK}
 WORKDIR /tmp/statoshi
 COPY ./conf/usr/local/bin/blocknotify /etc/periodic/15min/blocknotify
 COPY ./conf/${NETWORK}.conf /root/.bitcoin/bitcoin.conf
-RUN  ./autogen.sh
+#FULLBUILDRUN  ./autogen.sh
 #########################
 FROM autogen as configure
 #########################
 WORKDIR /tmp/statoshi
-RUN ./configure --disable-wallet --disable-tests --disable-hardening --disable-man --enable-util-cli --enable-util-tx --with-gui=no --without-miniupnpc --disable-bench
+#FULLBUILDRUN ./configure --disable-wallet --disable-tests --disable-hardening --disable-man --enable-util-cli --enable-util-tx --with-gui=no --without-miniupnpc --disable-bench
 ######################
 FROM configure as make
 ######################
 WORKDIR /tmp/statoshi
-RUN make -f Makefile
+#FULLBUILDRUN make -f Makefile
+#FULLBUILDRUN ls /usr/local/include/*
 ######################
 FROM make as install
 ######################
 WORKDIR /tmp/statoshi
 RUN mkdir -p /usr/local/bin/
-RUN make -f Makefile install
+#FULLBUILDRUN make -f Makefile install
 ######################
 EXPOSE 80 2003-2004 2013-2014 2023-2024 3000 8080 8118 8333 8332 18333 8125 8125/udp 8126 9050 9051
 ######################
@@ -148,7 +147,7 @@ ENV STATSD_INTERFACE tcp/udp
 #COPY --from=config-statsd /usr /usr
 #COPY --from=config-statsd /etc /etc
 #COPY conf/opt/statsd/config/ /opt/defaultconf/statsd/config/
-#COPY conf /
+COPY conf /
 
 
 
