@@ -102,9 +102,11 @@ RUN ls /usr/local/include/*
 ############################
 FROM build-statoshi as autogen
 ############################
+ARG NETWORK=${NETWORK}
+ENV NETWORK=${NETWORK}
 WORKDIR /tmp/statoshi
 COPY ./conf/usr/local/bin/blocknotify /etc/periodic/15min/blocknotify
-COPY ./conf/bitcoin.conf /root/.bitcoin/bitcoin.conf
+COPY ./conf/${NETWORK}.conf /root/.bitcoin/bitcoin.conf
 RUN  ./autogen.sh
 #########################
 FROM autogen as configure
@@ -183,6 +185,6 @@ FROM config-final as statoshi
 #RUN gpg --verify /usr/local/bin/bitcoind.gpg    /usr/local/bin/bitcoind
 #RUN gpg --verify /usr/local/bin/bitcoin-cli.gpg /usr/local/bin/bitcoin-cli
 #RUN gpg --verify /usr/local/bin/bitcoin-tx.gpg  /usr/local/bin/bitcoin-tx
-#ENTRYPOINT ["entrypoint"]
+ENTRYPOINT ["entrypoint"]
 CMD ["bitcoind"]
 

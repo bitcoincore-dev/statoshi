@@ -19,6 +19,7 @@ services:
       - GIT_PROFILE=${GIT_PROFILE}
       - GIT_REPO_NAME=${GIT_REPO_NAME}
       - BITCOIN_CONF=${BITCOIN_CONF}
+      - NETWORK=${NETWORK}
       - DATADIR=${DATADIR}
       - NOCACHE=${NOCACHE}
       - VERBOSE=${VERBOSE}
@@ -46,6 +47,7 @@ services:
         - GIT_SERVER=${GIT_SERVER}
         - GIT_PROFILE=${GIT_PROFILE}
         - BITCOIN_CONF=${BITCOIN_CONF}
+        - NETWORK=${NETWORK}
         - DATADIR=${DATADIR}
         - NOCACHE=${NOCACHE}
         - VERBOSE=${VERBOSE}

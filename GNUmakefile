@@ -78,6 +78,12 @@ DOCKERFILE_PATH							:= $(HOME)/$(PROJECT_NAME)/$(DOCKERFILE)
 export DOCKERFILE_PATH
 BITCOIN_CONF							:= $(HOME)/$(PROJECT_NAME)/conf/bitcoin.conf
 export BITCOIN_CONF
+ifeq ($(network),)
+NETWORK									:= signet
+else
+NETWORK									:= $(network)
+endif
+export NETWORK
 ifeq ($(datadir),)
 DATADIR									:= $(HOME)/.statoshi
 else
@@ -204,6 +210,7 @@ report:
 	@echo '        - DOCKERFILE=${DOCKERFILE}'
 	@echo '        - DOCKERFILE_PATH=${DOCKERFILE_PATH}'
 	@echo '        - BITCOIN_CONF=${BITCOIN_CONF}'
+	@echo '        - NETWORK=${NETWORK}'
 	@echo '        - DATADIR=${DATADIR}'
 	@echo '        - NOCACHE=${NOCACHE}'
 	@echo '        - VERBOSE=${VERBOSE}'
