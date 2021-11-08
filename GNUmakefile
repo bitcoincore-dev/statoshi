@@ -128,6 +128,17 @@ help:
 	@echo ''
 	@echo '	[USAGE]:	make [BUILD] run [EXTRA_ARGUMENTS]	'
 	@echo ''
+	@echo '		make init'
+	@echo ''
+	@echo '	bitcoin commands:'
+	@echo ''
+	@echo '		make local-autogen'
+	@echo '		make local-configure'
+	@echo ''
+	@echo '	docker commands:'
+	@echo ''
+	@echo '		make build-docker'
+	@echo ''
 	@echo '		make init header build user=root uid=0 nocache=false verbose=true'
 	@echo ''
 	@echo '	[DEV ENVIRONMENT]:	'
@@ -247,11 +258,8 @@ host:
 
 #######################
 .PHONY: init
+.SILENT:
 init:
-ifneq ($(shell id -u),0)
-	@echo 'sudo make init #try if permissions issue'
-endif
-	@echo 'init'
 	git config --global core.editor vim
 ifneq ($(shell id -u),0)
 	sudo bash -c 'mkdir -p /usr/local/include/'
@@ -259,7 +267,6 @@ ifneq ($(shell id -u),0)
 	sudo bash -c 'install -v $(PWD)/src/statsd_client.cpp		/usr/local/include/statsd_client.cpp'
 endif
 	rm -f Makefile
-	@echo ''
 #######################
 .PHONY: local-autogen
 local-autogen:
