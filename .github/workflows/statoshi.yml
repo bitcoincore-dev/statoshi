@@ -38,20 +38,10 @@ jobs:
           access_token: ${{ github.token }}
       - name: Checkout repository
         uses: actions/checkout@v2
-      - name: install, build, and test
+      - name: make init fullbuild=true - build-docker
         run: |
-          make init
+          make init fullbuild=true
           make build-docker
-          #sudo apt install python python3 build-essential g++ python-dev autotools-dev libicu-dev libbz2-dev libboost-all-dev
-          #sudo apt install -y mkdocs
-          #./autogen.sh
-          #./configure --without-bdb
-          #pip install -r docs/requirements.txt
-          #pip install -r requirements.txt
-          #make build nocache=true
-          #make build para=true
-          #make install verbose=true
-          #make uninstall
 
   ubuntu-20-build_and_test:
     runs-on: ubuntu-20.04
@@ -64,18 +54,8 @@ jobs:
       - name: make init help report
         run: |
           make init help report
-      - name: install, build, and test
+      - name: make init fullbuild=true - build-docker
         run: |
-          make init
+          make init fullbuild=true
           make build-docker
-          #sudo apt install python python3 build-essential g++ python-dev autotools-dev libicu-dev libbz2-dev libboost-all-dev
-          #sudo apt install -y mkdocs
-          #./autogen.sh
-          #./configure --without-bdb
-          #pip install -r docs/requirements.txt
-          #pip install -r requirements.txt
-          #make build nocache=true
-          #make build para=true
-          #make install verbose=true
-          #make uninstall
 

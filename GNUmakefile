@@ -283,7 +283,7 @@ endif
 #######################
 .PHONY: init
 .SILENT:
-init:
+init: fullbuild
 	git config --global core.editor vim
 ifneq ($(shell id -u),0)
 	sudo bash -c 'mkdir -p /usr/local/include/'

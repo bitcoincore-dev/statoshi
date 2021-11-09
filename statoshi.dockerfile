@@ -1,4 +1,4 @@
-ARG BASE_IMAGE=docker.io/graphiteapp/graphite-statsd:latest
+ARG BASE_IMAGE=alpine:latest
 #####################################
 FROM ${BASE_IMAGE} as header
 #####################################
@@ -6,10 +6,12 @@ LABEL org.opencontainers.image.source https://github.com/${PROFILE_NAME}/${PROJE
 LABEL org.opencontainers.image.description Dockerized Statoshi.info node
 # linux-headers for futex.h in Qt depends build
 # qt5-qttools-dev for lrelease
-RUN apk ${VERBOSE} ${NOCACHE} --update add \
+#COPY conf/opt/statsd/config/ /opt/defaultconf/statsd/config/
+
+RUN apk update && apk upgrade && apk ${VERBOSE} ${NOCACHE} --update add \
     autoconf \
     automake \
-    #bash-completion \
+    bash-completion \
     bison \
     #busybox \
     boost-dev \
@@ -39,48 +41,49 @@ RUN apk ${VERBOSE} ${NOCACHE} --update add \
     vim \
     zeromq-dev
 RUN apk update && apk upgrade
-#FULLBUILDRUN apk add ${VERBOSE} ${NOCACHE} \
-#FULLBUILD    autoconf \
-#FULLBUILD    automake \
-#FULLBUILD    binutils \
-#FULLBUILD    ca-certificates \
-#FULLBUILD    cmake \
-#FULLBUILD    curl \
-#FULLBUILD    doxygen \
-#FULLBUILD    git \
-#FULLBUILD    libtool \
-#FULLBUILD    make \
-#FULLBUILD    patch \
-#FULLBUILD    pkgconfig \
-#FULLBUILD    python3 \
-#FULLBUILD    py3-psutil \
-#FULLBUILD    vim
-#FULLBUILD
-#FULLBUILDRUN apk add ${VERBOSE} ${NOCACHE} \
-#FULLBUILD    g++ \
-#FULLBUILD    build-base \
-#FULLBUILD    boost-libs \
-#FULLBUILD    libgcc \
-#FULLBUILD    libstdc++ \
-#FULLBUILD    musl \
-#FULLBUILD    boost-system \
-#FULLBUILD    boost-build \
-#FULLBUILD    boost-dev \
-#FULLBUILD    openssl-dev \
-#FULLBUILD    libevent-dev \
-#FULLBUILD    libzmq \
-#FULLBUILD    zeromq-dev \
-#FULLBUILD    protobuf-dev \
-#FULLBUILD    linux-headers \
-#FULLBUILD    libbz2 \
-#FULLBUILD    libcap-dev \
-#FULLBUILD    librsvg \
-#FULLBUILD    tiff-tools \
-#FULLBUILD    zlib-dev \
-#FULLBUILD    py3-setuptools
-#FULLBUILDRUN apk add libzmq
-#FULLBUILDRUN python3 -m ensurepip --upgrade
-#FULLBUILDRUN python3 -m pip install pyzmq
+RUN apk add ${VERBOSE} ${NOCACHE} \
+    autoconf \
+    automake \
+    binutils \
+    ca-certificates \
+    cmake \
+    curl \
+    doxygen \
+    git \
+    libtool \
+    make \
+    patch \
+    pkgconfig \
+    python3 \
+    py3-psutil \
+    vim
+
+RUN apk add ${VERBOSE} ${NOCACHE} \
+    g++ \
+    build-base \
+    boost-libs \
+    libgcc \
+    libstdc++ \
+    musl \
+    boost-system \
+    boost-build \
+    boost-dev \
+    openssl-dev \
+    libevent-dev \
+    libzmq \
+    zeromq-dev \
+    protobuf-dev \
+    linux-headers \
+    libbz2 \
+    libcap-dev \
+    librsvg \
+    tiff-tools \
+    zlib-dev \
+    py3-setuptools \
+    bash
+RUN apk add libzmq
+RUN python3 -m ensurepip --upgrade
+RUN python3 -m pip install pyzmq
 
 #ARG GIT_SERVER=${GIT_SERVER}
 #ARG PROFILE=${PROFILE}
@@ -91,9 +94,9 @@ RUN apk update && apk upgrade
 ############################
 RUN  mkdir -p /root/.bitcoin
 WORKDIR /tmp/statoshi
-#FULLBUILDCOPY . /tmp/statoshi
-#FULLBUILDCOPY ./src/statsd_client.h   /usr/local/include/
-#FULLBUILDCOPY ./src/statsd_client.cpp /usr/local/include/
+COPY . /tmp/statoshi
+COPY ./src/statsd_client.h   /usr/local/include/
+COPY ./src/statsd_client.cpp /usr/local/include/
 ############################
 FROM header as build-statoshi
 RUN echo
@@ -103,76 +106,40 @@ FROM build-statoshi as autogen
 ARG NETWORK=${NETWORK}
 ENV NETWORK=${NETWORK}
 WORKDIR /tmp/statoshi
+COPY conf /
 COPY ./conf/usr/local/bin/blocknotify /etc/periodic/15min/blocknotify
 COPY ./conf/${NETWORK}.conf /root/.bitcoin/bitcoin.conf
-#FULLBUILDRUN  ./autogen.sh
+RUN  ./autogen.sh
 #########################
 FROM autogen as configure
 #########################
 WORKDIR /tmp/statoshi
-#FULLBUILDRUN ./configure --disable-wallet --disable-tests --disable-hardening --disable-man --enable-util-cli --enable-util-tx --with-gui=no --without-miniupnpc --disable-bench
+RUN ./configure --disable-wallet --disable-tests --disable-hardening --disable-man --enable-util-cli --enable-util-tx --with-gui=no --without-miniupnpc --disable-bench
 ######################
 FROM configure as make
 ######################
 WORKDIR /tmp/statoshi
-#FULLBUILDRUN make -f Makefile
-#FULLBUILDRUN ls /usr/local/include/*
+RUN make -f Makefile
+RUN ls /usr/local/include/*
 ######################
 FROM make as install
 ######################
 WORKDIR /tmp/statoshi
 RUN mkdir -p /usr/local/bin/
-#FULLBUILDRUN make -f Makefile install
+RUN make -f Makefile install
 ######################
 EXPOSE 80 2003-2004 2013-2014 2023-2024 3000 8080 8118 8333 8332 18333 8125 8125/udp 8126 9050 9051
 ######################
-FROM install as install-statsd
-######################
-COPY --from=install /usr /usr
-COPY --from=install /etc /etc
-#COPY --from=install /root/.bitcoin /root/.bitcoin
-RUN apk add nodejs npm
-#ARG statsd_version=0.8.6
-#ARG statsd_repo=https://github.com/statsd/statsd.git
-#WORKDIR /opt
-#RUN git clone ${statsd_repo} \
-# && cd /opt/statsd \
-# && git checkout tags/v${statsd_version} \
-# && npm install
-######################
-FROM install-statsd as config-statsd
-#######################
-ENV STATSD_INTERFACE tcp/udp
-#COPY --from=config-statsd /opt /opt
-#COPY --from=config-statsd /usr /usr
-#COPY --from=config-statsd /etc /etc
-#COPY conf/opt/statsd/config/ /opt/defaultconf/statsd/config/
-COPY conf /
-
-
-
-
-
-
 ARG DATADIR=${DATADIR}
 #VOLUME ["/etc/nginx", "/opt/statsd/config", "${DATADIR}"]
-
-
-
-
-
-#######################
-FROM config-statsd as config-final
-#######################
-STOPSIGNAL SIGHUP
 #RUN make -j $(nproc) install -C ${REPO}/depends
 #RUN apk add libzmq
 #RUN /usr/bin/python3.8 -m pip install --upgrade pip
 #RUN python3 -m pip install pyzmq
 ###########################
-FROM config-final as statoshi
+FROM install as statoshi
 ###########################
-
+#COPY --from=install /usr /usr
 ###########################
 # Micro containers may not be able to compile from source - signed binaries verified here
 ###########################
@@ -184,6 +151,8 @@ FROM config-final as statoshi
 #RUN gpg --verify /usr/local/bin/bitcoind.gpg    /usr/local/bin/bitcoind
 #RUN gpg --verify /usr/local/bin/bitcoin-cli.gpg /usr/local/bin/bitcoin-cli
 #RUN gpg --verify /usr/local/bin/bitcoin-tx.gpg  /usr/local/bin/bitcoin-tx
-ENTRYPOINT ["entrypoint"]
-CMD ["bitcoind"]
+#ENTRYPOINT ["entrypoint"]
+#CMD ["bitcoind"]
+EXPOSE 80 2003-2004 2013-2014 2023-2024 3000 8080 8118 8333 8332 18333 8125 8125/udp 8126 9050 9051
+CMD ["bash"]
 
