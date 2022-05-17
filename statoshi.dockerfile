@@ -68,7 +68,7 @@ RUN ./configure --disable-tests --disable-man --disable-bench --with-gui=no --di
 FROM configure as make
 ######################
 WORKDIR /tmp/statoshi
-RUN make -f Makefile -j $(nproc)
+RUN make -f Makefile
 ######################
 FROM make as install
 ######################
