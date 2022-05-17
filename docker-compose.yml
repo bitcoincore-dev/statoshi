@@ -48,7 +48,8 @@ services:
     # Expose current project folder to container.
     volumes:
       - ${DATADIR:-.}:/root/.bitcoin:consistent
+    expose:
+      - '38333'
     ports:
-       #hostPORT:imagePORT
-     - "${NODE_PORT}:38333"
+     - 38333:38333
 

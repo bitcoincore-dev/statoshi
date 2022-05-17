@@ -103,13 +103,13 @@ VERBOSE									:=
 endif
 export VERBOSE
 ifeq ($(port),)
-PUBLIC_PORT								:= 80
+PUBLIC_PORT								:= 8080
 else
 PUBLIC_PORT								:= $(port)
 endif
 export PUBLIC_PORT
 ifeq ($(nodeport),)
-NODE_PORT								:= 8333
+NODE_PORT								:= 38333
 else
 NODE_PORT								:= $(nodeport)
 endif
