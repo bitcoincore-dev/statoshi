@@ -3,8 +3,8 @@ ARG BASE_IMAGE=docker.io/graphiteapp/graphite-statsd:latest
 FROM ${BASE_IMAGE} as header
 #####################################
 
-ENV PROFILE_NAME=${PROFILE_NAME}
-ENV PROJECT_NAME=${PROJECT_NAME}
+ENV PROFILE_NAME ${PROFILE_NAME}
+ENV PROJECT_NAME ${PROJECT_NAME}
 ARG TRIPLET=${TRIPLET}
 
 LABEL maintainer="@RandyMcMillan <randy.lee.mcmillan@gmail.com>"
@@ -15,6 +15,7 @@ LABEL org.opencontainers.image.description Dockerized Statoshi.info node
 RUN apk ${VERBOSE} ${NOCACHE} --update add \
     autoconf \
     automake \
+    bash \
     bison \
     boost-dev \
     cmake \
@@ -35,6 +36,7 @@ RUN apk ${VERBOSE} ${NOCACHE} --update add \
     python3 \
     qt5-qtbase-dev \
     qt5-qttools-dev \
+    su-exec \
     sqlite \
     valgrind \
     vim \
@@ -82,7 +84,6 @@ FROM ${BASE_IMAGE} as statoshi
 ######################
 #REF: https://raw.githubusercontent.com/graphite-project/docker-graphite-statsd/master/Dockerfile
 ARG NETWORK=${NETWORK}
-ENV STATSD_INTERFACE=udp
 COPY --from=install /usr /usr
 COPY --from=install /var /var
 COPY --from=install /opt /opt
@@ -93,8 +94,10 @@ COPY ./conf/usr/local/bin/blocknotify /etc/periodic/15min/blocknotify
 COPY ./conf/${NETWORK}.conf /root/.bitcoin/bitcoin.conf
 RUN  rm -rf /var/cache/apk/*
 
-EXPOSE 80 2003-2004 2013-2014 2023-2024 3000 8080 8118 8333 8332 38333 8125 8125/udp 8126 9050 9051
-# VOLUME ["/opt/graphite/conf", "/opt/graphite/storage", "/opt/graphite/webapp/graphite/functions/custom", "/etc/nginx", "/opt/statsd/config", "/etc/logrotate.d", "/var/log", "/var/lib/redis"]
+# EXPOSE 80 2003-2004 2013-2014 2023-2024 3000 8080 8118 8333 8332 38333 8125 8125/udp 8126 9050 9051
+# ENV STATSD_INTERFACE udp
+ENV BITCOIN_DIR /root/.bitcoin
+# VOLUME $BITCOIN_DIR
 
 STOPSIGNAL SIGHUP
 
