@@ -2,97 +2,182 @@
 
 if hash docker 2>/dev/null; then
 
-
-STATS_ID=$(echo $(docker ps | awk '/stats/'|awk ' {print $1}' | awk 'NR==1'))
-export STATS_ID
-#echo STATS_ID: $STATS_ID
-
-STATS_IMAGE=$(echo $(docker ps | awk '/stats/'|awk ' {print $2}' | awk 'NR==1'))
-export STATS_IMAGE
-#echo STATS_TAG: $STATS_TAG
-
-#docker exec -it $STATS_ID sh -c  "/usr/local/bin/bitcoind -daemon"
-#docker exec -it $STATS_ID sh -c  "/usr/local/bin/bitcoin-cli gettxoutsetinfo"
-#docker exec -it $STATS_ID sh -c  "/usr/local/bin/bitcoin-cli getmininginfo"
+BITCOIND_ID=$(echo $(docker ps | awk '/statoshi/'|awk ' {print $1}' | awk 'NR==1'))
+export BITCOIND_ID
+BITCOIND_IMAGE=$(echo $(docker images | awk '/statoshi/'|awk ' {print $3}' | awk 'NR==1'))
+export BITCOIND_IMAGE
 
 for ((i=1;i<=$#;i++));
 do
-
-    if [ ${!i} = "-id" ]; then
+    if [[ ${!i} = info ]]; then
         ((i++))
-	echo STATS_ID: $STATS_ID
+        echo $BITCOIND_ID
+        echo "!i = ${!i}"
+        echo "0 = $0"
+        echo "1 = $1"
+        echo "2 = $2"
+        echo "3 = $3"
+        echo "4 = $4"
+        echo "5 = $5"
+        echo "6 = $6"
+        echo "7 = $7"
+        exit
 
-    elif [ ${!i} = "-image" ]; then
+    elif [[ ${!i} = id ]]; then
         ((i++))
-	echo STATS_IMAGE: $STATS_IMAGE
+        echo $BITCOIND_ID
+        exit
 
-    elif [ ${!i} = "-start" ]; then
+    elif [[ ${!i} = top ]]; then
         ((i++))
-	docker exec -it $STATS_ID sh -c  "/usr/local/bin/entrypoint &"
-	docker exec -it $STATS_ID sh -c  "/usr/local/bin/bitcoind -daemon &"
-	docker exec -it $STATS_ID sh -c  "/usr/local/bin/bitcoin-cli gettxoutsetinfo"
-	docker exec -it $STATS_ID sh -c  "/usr/local/bin/bitcoin-cli getmininginfo"
+        docker top $BITCOIND_ID
+        exit
 
-    elif [ ${!i} = "-prune" ]; then
+    elif [[ ${!i} == iftop ]]; then
         ((i++))
-	docker exec -it $STATS_ID sh -c  "/usr/local/bin/bitcoind -daemon -prune=550"
+        docker exec -it $BITCOIND_ID /bin/bash -c "test -x '$(which iftop)' && iftop -P -p -i eth0 $2 $3 $4 $5 || apt update && apt install -qq net-tools iftop > /dev/null && iftop -P -p $2 $3 $4 $5"
+        exit
 
-    elif [ ${!i} = "-cli" ]; then
+    elif [[ ${!i} = netinfo ]]; then
         ((i++))
-        #echo ${!i};
-	docker exec -it $STATS_ID sh -c  "/usr/local/bin/bitcoin-cli ${!i}"
-        #var2=${!i};
+        docker exec $BITCOIND_ID sh -c "bitcoin-cli -netinfo $2"
+        exit
 
-    elif [ ${!i} = "-d" ]; then
+    elif [[ ${!i} = gettxoutsetinfo ]]; then
         ((i++))
-        #echo ${!i};
-	docker exec -it $STATS_ID sh -c  "/usr/local/bin/bitcoind ${!i}"
-        #var2=${!i};
+        docker exec $BITCOIND_ID sh -c "bitcoin-cli gettxoutsetinfo"
+        exit
 
-    elif [ ${!i} = "-ep" ]; then
+    elif [[ ${!i} = getmininginfo ]]; then
         ((i++))
-	docker exec -it $STATS_ID sh -c  "/usr/local/bin/entrypoint &"
+        docker exec $BITCOIND_ID sh -c "bitcoin-cli getmininginfo"
+        exit
 
-    elif [ ${!i} = "-b" ]; then
+    elif [[ ${!i} = listwallet* ]]; then
         ((i++))
-        var4=${!i};
+        #docker exec $BITCOIND_ID sh -c "bitcoin-cli listwallets"
+        docker exec $BITCOIND_ID sh -c "ls /root/.bitcoin/signet/wallets"
+        exit
 
-    elif [ ${!i} = "-l" ]; then
+    elif [[ ${!i} = createwallet ]]; then
         ((i++))
-        var5=${!i};
+        if [ -z $2 ]; then
+        docker exec $BITCOIND_ID sh -c "bitcoin-cli createwallet playground-wallet" 2>/dev/null
+        exit
+        fi
+        docker exec $BITCOIND_ID sh -c "bitcoin-cli createwallet $2 $3 $4 $5 $6 $7" 2>/dev/null
+        exit
 
-    elif [ ${!i} = "-a" ]; then
+    elif [[ ${!i} = getbalance ]]; then
         ((i++))
-        var6=${!i};
+        if [ -z $2 ]; then
+        docker exec $BITCOIND_ID sh -c "bitcoin-cli -rpcwallet=playground-wallet getbalance"
+        fi
+        exit
+        docker exec $BITCOIND_ID sh -c "bitcoin-cli -rpcwallet=$2 getbalance"
+    elif [[ ${!i} = getbalances ]]; then
+        ((i++))
+        if [ -z $2 ]; then
+        docker exec $BITCOIND_ID sh -c "bitcoin-cli -rpcwallet=playground-wallet getbalances"
+        exit
+        fi
+        docker exec $BITCOIND_ID sh -c "bitcoin-cli -rpcwallet=$2 getbalances"
+        exit
 
-    elif [ ${!i} = "-h" ]; then
+    elif [[ ${!i} = getnewaddress ]]; then
         ((i++))
+        play-bitcoin createwallet
+        if [ -z $2 ]; then
+        # bitcoin-cli -rpcwallet=plebnet1 getnewaddress
+        docker exec $BITCOIND_ID sh -c "bitcoin-cli -rpcwallet=playground-wallet getnewaddress"
+        exit
+        fi
+        docker exec $BITCOIND_ID sh -c "bitcoin-cli -rpcwallet=$2 getnewaddress"
+        exit
+
+    elif [[ ${!i} = sendtoaddress ]]; then
+        ((i++))
+        # bitcoin-cli -rpcwallet=playground-wallet sendtoaddress amount feerate
+        #play-bitcoin sendtoaddress playground-wallet $(export newaddress=$(bitcoin-cli getnewaddress rpcwallet=playground-wallet); echo $newaddress)
+        #play-bitcoin sendtoaddress playground-wallet
+        if [ -z $2 ]; then
+            echo "defaulting to playground-wallet"
+            PLAYGROUND_WALLET='playground-wallet'
+            play-bitcoin createwallet $PLAYGROUND_WALLET
+            echo "play-bitcoin sendtoaddress <wallet-name> <address> <amount>"
+            echo "Try:"
+            echo "play-bitcoin listwallets"
+            exit
+        fi
+        if [ -z $3 ]; then
+            echo "include address to send to..."
+            echo "play-bitcoin sendtoaddress $2 <address> <amount>"
+            exit
+        fi
+        if [ -z $4 ]; then
+            echo "include amount to send to $3"
+            echo "play-bitcoin sendtoaddress $2 $3 <amount>"
+            exit
+        fi
+        docker exec $BITCOIND_ID sh -c "bitcoin-cli -rpcwallet=$2 sendtoaddress $3 $4"
+        exit
+
+    elif [[ ${!i} = start ]]; then
+        ((i++))
+        docker-compose up bitcoind
+        exit
+
+    elif [[ ${!i} = restart ]]; then
+        ((i++))
+        docker restart $BITCOIND_ID
+        exit
+
+    elif [[ ${!i} = stop ]]; then
+        ((i++))
+        docker stop $BITCOIND_ID
+        exit
+
+    elif [[ ${!i} = *shell ]]; then
+        ((i++))
+        docker exec -it $BITCOIND_ID sh
+        exit
+
+    elif [[ ${!i} == *help ]]; then
+        ((i++))
+        echo "play-bitcoin id"
+        echo "play-bitcoin top"
+        echo "play-bitcoin ifconfig"
+        echo "play-bitcoin iftop"
+        echo "play-bitcoin netinfo 5"
+        echo "play-bitcoin shell"
+        echo "play-bitcoin start"
+        echo "play-bitcoin stop"
         echo
-        echo "stats <command> #- execute shell command in container"
-        echo "stats -d <command> #- send command to bitcoind"
-        echo "stats -cli <command> #- send command to bitcoin-cli"
+        echo "play-bitcoin '<COMMAND>'"
+        echo "play-bitcoin createwallet  playground-wallet"
+        echo "play-bitcoin createwallet  <walletname>"
+        echo "play-bitcoin listwallets"
+        echo "play-bitcoin getnewaddress playground-wallet"
+        echo "play-bitcoin getnewaddress <walletname>"
+        echo "play-bitcoin getbalance"
+        echo "play-bitcoin getbalances"
         echo
-        echo "Examples:"
+        echo "https://www.plebnet.fun"
         echo
-        echo "stats ls"
-        echo "stats cd / & ls -a"
-        echo "stats -cli gettxoutsetinfo"
-        echo "stats -cli getmininginfo"
-        echo
-        echo "docker exec -it $STATS_ID sh -c  '/usr/local/bin/bitcoind -daemon -prune=550'"
-        echo "docker exec -it $STATS_ID sh -c  '/usr/local/bin/bitcoin-cli gettxoutsetinfo'"
-        echo "docker exec -it $STATS_ID sh -c  '/usr/local/bin/bitcoin-cli getmininginfo'"
-        echo "docker exec -it $STATS_ID sh -c  '/usr/local/bin/bitcoin-cli $1'"
+        echo "Fund bitcoin playground-wallet:"
+        echo "play-getcoins -a \$(play-bitcoin getnewaddress)"
+        echo ""
+        echo "newaddress=\$(bitcoin-cli -signet getnewaddress)"
+        echo "play-bitcoin sendtoaddress playground-wallet \$newaddress 0.01"
+        exit
 
-    elif [ -n ${!i} ]; then
+    elif [[ -n ${!i} ]]; then
         ((i++))
-        echo 'execute in container'
-	docker exec -it $STATS_ID sh -c  "$1"
+        docker exec $BITCOIND_ID sh -c  "$1 $2 $3 $4 $5 $6 $7"
+        exit
     fi
 
 done;
-
-#docker exec -it $STATS_ID sh -c "find /usr/local -maxdepth 2 -type f -name 'stats'"
-#docker exec -it $STATS_ID sh -c "find /usr/local -maxdepth 2 -type f -name 'stats*'"
-#echo stats-cli $1 
+play-bitcoin help;
 fi #end if docker hash
+
