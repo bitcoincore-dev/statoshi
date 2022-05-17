@@ -39,12 +39,8 @@ RUN apk ${VERBOSE} ${NOCACHE} --update add \
     su-exec \
     sqlite \
     valgrind \
-    vim \
-    zeromq-dev
-
-RUN apk add libzmq
-RUN python3 -m ensurepip --upgrade
-RUN python3 -m pip install pyzmq twisted[tls]
+    vim #\
+    # zeromq-dev
 
 ############################
 WORKDIR /tmp/statoshi
@@ -80,19 +76,23 @@ WORKDIR /tmp/statoshi
 RUN mkdir -p /usr/local/bin/
 RUN make -f Makefile install
 ######################
-FROM ${BASE_IMAGE} as statoshi
+# FROM ${BASE_IMAGE} as statoshi
 ######################
 #REF: https://raw.githubusercontent.com/graphite-project/docker-graphite-statsd/master/Dockerfile
 ARG NETWORK=${NETWORK}
-COPY --from=install /usr /usr
-COPY --from=install /var /var
-COPY --from=install /opt /opt
-COPY --from=install /etc /etc
+# COPY --from=install /usr /usr
+# COPY --from=install /var /var
+# COPY --from=install /opt /opt
+# COPY --from=install /etc /etc
 RUN  mkdir -p /root/.bitcoin
 COPY ./conf/usr/local/bin/entrypoint /usr/local/bin/entrypoint
 COPY ./conf/usr/local/bin/blocknotify /etc/periodic/15min/blocknotify
 COPY ./conf/${NETWORK}.conf /root/.bitcoin/bitcoin.conf
 RUN  rm -rf /var/cache/apk/*
+
+# RUN apk add libzmq
+# RUN python3 -m ensurepip --upgrade
+# RUN python3 -m pip install pyzmq twisted[tls]
 
 # EXPOSE 80 2003-2004 2013-2014 2023-2024 3000 8080 8118 8333 8332 38333 8125 8125/udp 8126 9050 9051
 # ENV STATSD_INTERFACE udp
