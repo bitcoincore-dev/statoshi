@@ -76,7 +76,7 @@ DOCKERFILE								:= $(PROJECT_NAME).dockerfile
 export DOCKERFILE
 DOCKERFILE_PATH							:= $(HOME)/$(PROJECT_NAME)/$(DOCKERFILE)
 export DOCKERFILE_PATH
-BITCOIN_CONF							:= $(HOME)/$(PROJECT_NAME)/conf/bitcoin.conf
+BITCOIN_CONF							:= $(PWD)/conf/bitcoin.conf
 export BITCOIN_CONF
 ifeq ($(network),)
 NETWORK									:= signet
@@ -85,7 +85,7 @@ NETWORK									:= $(network)
 endif
 export NETWORK
 ifeq ($(datadir),)
-DATADIR									:= $(HOME)/.statoshi
+DATADIR									:= $(PWD)/volumes/statoshi_datadir
 else
 DATADIR									:= $(datadir)
 endif
@@ -270,6 +270,7 @@ init:
 	git config --global core.editor vim
 	docker pull docker.io/graphiteapp/graphite-statsd:latest
 	docker pull ghcr.io/bitcoincore-dev/statoshi/$(ARCH)/root:latest
+	bash -c 'mkdir -p $(DATADIR)'
 ifneq ($(shell id -u),0)
 	sudo bash -c 'mkdir -p /usr/local/include/'
 	sudo bash -c 'install -v $(PWD)/src/statsd_client.h		    /usr/local/include/statsd_client.h'
@@ -292,8 +293,9 @@ signin:
 build: build-docker
 build-docker:
 	@echo 'build'
-	@echo NETWORK=$(NETWORK)
-	docker build -f statoshi.dockerfile --build-arg NETWORK=$(NETWORK) -t $(PROJECT_NAME):$(HOST_USER) .
+	@echo NETWORK=${NETWORK}
+	# docker build -f statoshi.dockerfile --build-arg NETWORK=$(NETWORK) --tag $(PROJECT_NAME):$(HOST_USER) --target statoshi .
+	# docker build -f statoshi.dockerfile --tag $(PROJECT_NAME):$(HOST_USER) --target statoshi .
 
 	#$(DOCKER_COMPOSE) $(VERBOSE) build --pull $(NOCACHE) statoshi
 	$(DOCKER_COMPOSE) $(VERBOSE) build $(NOCACHE) statoshi

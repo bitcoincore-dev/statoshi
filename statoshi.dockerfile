@@ -28,7 +28,7 @@ RUN apk ${VERBOSE} ${NOCACHE} --update add \
     libtool \
     linux-headers \
     make \
-    mingw-w64-gcc \
+    # mingw-w64-gcc \
     miniupnpc-dev \
     patch \
     perl \
@@ -96,8 +96,8 @@ RUN  rm -rf /var/cache/apk/*
 
 # EXPOSE 80 2003-2004 2013-2014 2023-2024 3000 8080 8118 8333 8332 38333 8125 8125/udp 8126 9050 9051
 # ENV STATSD_INTERFACE udp
-ENV BITCOIN_DIR /root/.bitcoin
-# VOLUME $BITCOIN_DIR
+ENV DATADIR /root/.bitcoin
+# VOLUME $DATADIR
 
 STOPSIGNAL SIGHUP
 
