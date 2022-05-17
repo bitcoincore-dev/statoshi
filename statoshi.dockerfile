@@ -34,6 +34,7 @@ RUN apk ${VERBOSE} ${NOCACHE} --update add \
     perl \
     pkgconfig \
     python3 \
+    py3-pip \
     qt5-qtbase-dev \
     qt5-qttools-dev \
     su-exec \
