@@ -44,7 +44,7 @@ RUN apk ${VERBOSE} ${NOCACHE} --update add \
 
 RUN apk add libzmq
 RUN python3 -m ensurepip --upgrade
-RUN python3 -m pip install pyzmq
+RUN python3 -m pip install pyzmq twisted[tls]
 
 ############################
 WORKDIR /tmp/statoshi
