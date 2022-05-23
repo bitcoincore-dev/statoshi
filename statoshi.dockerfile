@@ -93,7 +93,7 @@ RUN  rm -rf /var/cache/apk/*
 
 # RUN apk add libzmq
 # RUN python3 -m ensurepip --upgrade
-# RUN python3 -m pip install pyzmq twisted[tls]
+RUN python3 -m pip install pyzmq twisted
 
 EXPOSE ${PORT} 2003-2004 2013-2014 2023-2024 3000 8080 8118 8333 8332 ${NODE_PORT} 8125 8125/udp 8126 9050 9051
 # ENV STATSD_INTERFACE udp
