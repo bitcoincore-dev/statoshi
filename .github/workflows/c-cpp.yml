@@ -30,17 +30,26 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+    - name: cache depends
     - uses: actions/cache@v3
+      id: cache-depends-sources
       with:
         path: |
-          ${{ github.workspace }}/depends
-        key: ${{ runner.os }}-depends
+          ${{ github.workspace }}/depends/sources
+        key: ${{ runner.os }}-depends-sources
         restore-keys: |
-          ${{ runner.os }}-depends
+          ${{ runner.os }}-depends-sources
+    - name: make depends
+    - uses: actions/cache@v3
+      if: steps.cache-depends-sources.outputs.cache-hit != 'true'
+      run: |
+        make download -C depends
+        #make install -C depends
+
+
     - uses: actions/cache@v3
       with:
         path: |
-          ${{ github.workspace }}/depends
           ${{ github.workspace }}/src/bitcoind
         key: ${{ runner.os }}-bitcoind
         restore-keys: |
