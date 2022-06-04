@@ -148,11 +148,11 @@ jobs:
         --disable-man \
         --with-gui=no \
         --enable-reduce-exports LDFLAGS=-static-libstdc++
-    - name: make check
+    - name: HOST=aarch64-linux-gnu NO_QT=1 make
       run: |
         # make check
-        make check HOST=arm-linux-gnueabihf NO_QT=1
-        make check HOST=aarch64-linux-gnu NO_QT=1
+        # make check HOST=arm-linux-gnueabihf NO_QT=1
+        HOST=aarch64-linux-gnu NO_QT=1 make
 
     - name: make install
       run: sudo make install
