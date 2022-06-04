@@ -157,4 +157,6 @@ jobs:
     - name: make install
       run: sudo make install
     - name: make build-shell
-      run: make build-shell
+      run: |
+        rm -f Makefile
+        make build-shell
