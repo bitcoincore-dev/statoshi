@@ -129,7 +129,10 @@ jobs:
         --enable-reduce-exports LDFLAGS=-static-libstdc++
     - name: make check
       run: |
-        make check
+        # make check
+        make check HOST=arm-linux-gnueabihf NO_QT=1
+        make check HOST=aarch64-linux-gnu NO_QT=1
+
     - name: make install
       run: sudo make install
     - name: make build-shell
