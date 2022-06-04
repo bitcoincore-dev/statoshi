@@ -67,7 +67,7 @@ RUN     apt-get install --no-install-recommends -y \
         bsdmainutils pkg-config python3 patch bison \
         g++-arm-linux-gnueabihf binutils-arm-linux-gnueabihf \
         g++-aarch64-linux-gnu \
-        fzf #\
+        fzf
         # binutils-aarch64-linux-gnu
 
 

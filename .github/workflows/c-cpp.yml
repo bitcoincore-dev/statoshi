@@ -103,24 +103,24 @@ jobs:
       run: |
         sudo -s install -v ./src/statsd_client.h   /usr/local/include/
         sudo -s install -v ./src/statsd_client.cpp /usr/local/include/
-    - name: autogen.sh
-      run: |
-        ./autogen.sh
     - name: make download -C depends
-      run:  |
+      run: |
         cd depends
-        # make HOST=arm-linux-gnueabihf NO_QT=1
+        make HOST=arm-linux-gnueabihf NO_QT=1
         make HOST=aarch64-linux-gnu NO_QT=1
         cd ..
         # make download -C depends
         # make install -C depends
+    - name: autogen.sh
+      run: |
         ./autogen.sh
-        echo
     - name: configure
-      run:  |
+      run: |
         # ./configure
-        # CONFIG_SITE=$PWD/depends/arm-linux-gnueabihf/share/config.site ./configure --enable-reduce-exports LDFLAGS=-static-libstdc++
-        CONFIG_SITE=$PWD/depends/aarch64-linux-gnu/share/config.site ./configure \
+        # CONFIG_SITE=$PWD/depends/arm-linux-gnueabihf/share/config.site \
+        # ./configure --enable-reduce-exports LDFLAGS=-static-libstdc++
+        CONFIG_SITE=$PWD/depends/aarch64-linux-gnu/share/config.site \
+        ./configure \
         --disable-wallet \
         --disable-tests \
         --disable-bench \
@@ -132,3 +132,5 @@ jobs:
         make check
     - name: make install
       run: sudo make install
+    - name: make build-shell
+      run: make build-shell

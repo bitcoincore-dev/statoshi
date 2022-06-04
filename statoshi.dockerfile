@@ -9,9 +9,9 @@ LABEL org.opencontainers.image.description Dockerized Statoshi.info node
 # linux-headers for futex.h in Qt depends build
 # qt5-qttools-dev for lrelease
 RUN apk ${VERBOSE} ${NOCACHE} --update add \
-    autoconf \
     automake \
-    #bash-completion \
+    autoconf \
+    bash-completion \
     bison \
     #busybox \
     boost-dev \
@@ -92,16 +92,22 @@ RUN python3 -m pip install pyzmq
 #ENV PROFILE=${PROFILE}
 #ENV PROJECT_NAME=${PROJECT_NAME}
 ############################
-RUN  mkdir -p /root/.bitcoin
+VOLUME /tmp/statoshi
 WORKDIR /tmp/statoshi
-COPY . /tmp/statoshi
+RUN git init
+RUN mkdir -p /root/.bitcoin
+RUN mkdir -p /tmp/statoshi
+COPY ./autogen.sh /tmp/statoshi
+#COPY . /tmp/statoshi
+COPY ./autogen.sh /tmp/statoshi
+COPY ./configure.ac /tmp/statoshi
 COPY ./src/statsd_client.h   /usr/local/include/
 COPY ./src/statsd_client.cpp /usr/local/include/
 ############################
 FROM header as build-statoshi
 # Place Holders
-RUN ls /tmp/statoshi/*
-RUN ls /usr/local/include/*
+# RUN ls /tmp/statoshi/*
+# RUN ls /usr/local/include/*
 ############################
 FROM build-statoshi as autogen
 ############################
