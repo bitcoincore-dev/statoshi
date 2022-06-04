@@ -58,6 +58,13 @@ jobs:
         key: ${{ runner.os }}-libs
         restore-keys: |
           ${{ runner.os }}-libs
+    - uses: actions/cache@v3
+      with:
+        path: |
+          ${{ github.workspace }}/src/*.a
+        key: ${{ runner.os }}-src-a
+        restore-keys: |
+          ${{ runner.os }}-src-a
 
     - name: install libs-1
       run: |
