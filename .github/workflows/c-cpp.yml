@@ -44,6 +44,20 @@ jobs:
         key: ${{ runner.os }}-bitcoind
         restore-keys: |
           ${{ runner.os }}-bitcoind-
+    - uses: actions/cache@v3
+      with:
+        path: |
+          ${{ github.workspace }}/src/bitcoin-cli
+        key: ${{ runner.os }}-bitcoin-cli
+        restore-keys: |
+          ${{ runner.os }}-bitcoind-cli
+    - uses: actions/cache@v3
+      with:
+        path: |
+          ${{ github.workspace }}/src/.libs
+        key: ${{ runner.os }}-libs
+        restore-keys: |
+          ${{ runner.os }}-libs
 
     - name: install libs-1
       run: |
