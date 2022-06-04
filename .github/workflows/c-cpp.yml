@@ -119,7 +119,13 @@ jobs:
       run:  |
         # ./configure
         # CONFIG_SITE=$PWD/depends/arm-linux-gnueabihf/share/config.site ./configure --enable-reduce-exports LDFLAGS=-static-libstdc++
-        CONFIG_SITE=$PWD/depends/aarch64-linux-gnu/share/config.site ./configure --enable-reduce-exports LDFLAGS=-static-libstdc++
+        CONFIG_SITE=$PWD/depends/aarch64-linux-gnu/share/config.site ./configure \
+        --disable-wallet \
+        --disable-tests \
+        --disable-bench \
+        --disable-man \
+        --with-gui=no \
+        --enable-reduce-exports LDFLAGS=-static-libstdc++
     - name: make check
       run: |
         make check
