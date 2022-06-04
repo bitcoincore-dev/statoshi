@@ -156,15 +156,14 @@ jobs:
 
     - name: make install
       run: sudo make install
-  build_with_gpr:
-      - name: make build-shell
-      runs-on: ubuntu-latest
-      steps:
-        - uses: actions/checkout@v2
-        - run: echo ${{ secrets.GITHUB_TOKEN }} | docker login docker.pkg.github.com -u $GITHUB_ACTOR --password-stdin
-        - run: docker pull docker.pkg.github.com/$GITHUB_REPOSITORY/build-cache-no-buildkit || true
-        - run: docker build -f docker/ubuntu.dockerfile . -t thing --cache-from=docker.pkg.github.com/$GITHUB_REPOSITORY/build-cache-no-buildkit
-        - run: docker tag ubuntu-cache docker.pkg.github.com/$GITHUB_REPOSITORY/build-cache-no-buildkit && docker push docker.pkg.github.com/$GITHUB_REPOSITORY/build-cache-no-buildkit || true
-        - run: |
-        -   rm -f Makefile
-        -   make build-shell
+    - name: make build-shell
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - run: echo ${{ secrets.GITHUB_TOKEN }} | docker login docker.pkg.github.com -u $GITHUB_ACTOR --password-stdin
+      - run: docker pull docker.pkg.github.com/$GITHUB_REPOSITORY/build-cache-no-buildkit || true
+      - run: docker build -f docker/ubuntu.dockerfile . -t thing --cache-from=docker.pkg.github.com/$GITHUB_REPOSITORY/build-cache-no-buildkit
+      - run: docker tag ubuntu-cache docker.pkg.github.com/$GITHUB_REPOSITORY/build-cache-no-buildkit && docker push docker.pkg.github.com/$GITHUB_REPOSITORY/build-cache-no-buildkit || true
+      - run: |
+      -   rm -f Makefile
+      -   make build-shell
