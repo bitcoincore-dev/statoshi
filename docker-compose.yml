@@ -1,96 +1,34 @@
+---
 version: '3.4'
+networks: {}
 services:
 
-  statoshi:
-    # Makefile fills PROJECT_NAME to current directory name.
-    # add UID to allow multiple users run this in parallel
+  ubuntu:
     container_name: ${PROJECT_NAME}_${HOST_UID:-4000}
-    hostname: ${PROJECT_NAME}
-      ## These variables are passed into the container.
-      #environment:
-      #  - TIME=${TIME}
-      #  - PACKAGE_PREFIX=${PACKAGE_PREFIX}
-      #  - ARCH=${ARCH}
-      #  - HOST_USER=${HOST_USER}
-      #  - HOST_UID=${HOST_UID}
-      #  - ALPINE_VERSION=${ALPINE_VERSION}
-      #  - PROJECT_NAME=${PROJECT_NAME}
-      #  - GIT_SERVER=${GIT_SERVER}
-      #  - GIT_PROFILE=${GIT_PROFILE}
-      #  - GIT_REPO_NAME=${GIT_REPO_NAME}
-      #  - BITCOIN_CONF=${BITCOIN_CONF}
-      #  - NETWORK=${NETWORK}
-      #  - DATADIR=${DATADIR}
-      #  - NOCACHE=${NOCACHE}
-      #  - VERBOSE=${VERBOSE}
-      #  - PUBLIC_PORT=${PUBLIC_PORT}
-      #  - NODE_PORT=${NODE_PORT}
-      #  - PASSWORD=${PASSWORD}
-      #  - CMD_ARGUMENTS=${CMD_ARGUMENTS}
-      ## Run with user priviliges by default.
+    hostname: ${PROJECT_NAME}_${HOST_UID:-4000}
+    environment:
+      - UID=${HOST_UID:-4000}
     user: ${HOST_USER:-nodummy}
-    image: ghcr.io/bitcoincore-dev/statoshi/${ARCH}/root:latest
-    restart: unless-stopped
+    image: ${PROJECT_NAME}:${HOST_USER:-nodummy}
+    privileged: true
     build:
       context: .
-      # This is the name of the last layer in stats.bitcoincore.dev
-      dockerfile: ${PROJECT_NAME}.dockerfile
-      # These variables are passed to Dockerfile.
+      target: base
+      dockerfile: docker/ubuntu.dockerfile
       args:
-        - TIME=${TIME}
-        - PACKAGE_PREFIX=${PACKAGE_PREFIX}
-        - ARCH=${ARCH}
-        - HOST_USER=${HOST_USER}
-        - HOST_UID=${HOST_UID}
-        - ALPINE_VERSION=${ALPINE_VERSION}
-        - PROJECT_NAME=${PROJECT_NAME}
-        - GIT_SERVER=${GIT_SERVER}
-        - GIT_PROFILE=${GIT_PROFILE}
-        - BITCOIN_CONF=${BITCOIN_CONF}
-        - NETWORK=${NETWORK}
-        - DATADIR=${DATADIR}
-        - NOCACHE=${NOCACHE}
-        - VERBOSE=${VERBOSE}
-        - PUBLIC_PORT=${PUBLIC_PORT}
-        - NODE_PORT=${NODE_PORT}
+        - HOST_UID=${HOST_UID:-4000}
+        - HOST_USER=${HOST_USER:-nodummy}
+        - SSH_PRIVATE_KEY=${SSH_PRIVATE_KEY}
         - PASSWORD=${PASSWORD}
-        - CMD_ARGUMENTS=${CMD_ARGUMENTS}
-    # Run container as a service. Replace with something useful.
-    #command: ["tail", "-f", "/dev/null"]
-    #command:  ["/usr/local/bin/entrypoint"]
-    # Expose current project folder to container.
+        - UBUNTU_VERSION=${UBUNTU_VERSION}
+    command: ["ssh-agent ssh-add"]
     volumes:
-      - ${HOME:-.}:/home/${HOST_USER}:consistent
-      - ${HOME:-.}/.statoshi:/home/${HOST_USER}/.bitcoin:consistent
-      - ${PWD:-.}:/home/${HOST_USER}/${PROJECT_NAME}:consistent
-      - ${PWD:-.}:/tmp:consistent
-    ports:
-       #hostPORT:imagePORT
-     - "8332:8332"
-       #- "${NODE_PORT}:${NODE_PORT}"
-     - "18332:18332"
-     - "38333:38333"
-
-  torproxy:
-    links:
-      - statoshi
-    # Makefile fills PROJECT_NAME to current directory name.
-    # add UID to allow multiple users run this in parallel
-    container_name: ${PROJECT_NAME}_${HOST_UID:-4000}
-    hostname: ${PROJECT_NAME}
-    # These variables are passed into the container.
-    user: ${HOST_USER:-nodummy}
-    image: ${PROJECT_NAME}_torproxy:${HOST_USER:-nodummy}
-    restart: unless-stopped
-    command:  ["/sbin/tini", "--", "/usr/bin/torproxy.sh"]
-    # Expose current project folder to container.
-    volumes:
-      - /etc/tor
-      - /var/lib/tor
-    ports:
-       #hostPORT:imagePORT
-       #we expose tor proxy ports for 'make torproxy'
-     - "8118:8118"
-     - "9050:9050"
-     - "9051:9051"
-
+      - type: bind
+        source: ${HOME:-.}
+        target: /home/${HOST_USER}
+      - type: bind
+        source: ${PWD:-.}
+        target: /home/${HOST_USER}/${PROJECT_NAME}
+      - type: bind
+        source: ~/.ssh
+        target: /home/${HOST_USER}/.ssh

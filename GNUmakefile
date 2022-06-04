@@ -1,202 +1,313 @@
 SHELL := /bin/bash
-PWD 									?= pwd_unknown
-THIS_FILE								:= $(lastword $(MAKEFILE_LIST))
+NOHUP := $(shell which nohup)
+
+PWD                                     ?= pwd_unknown
+
+THIS_FILE                               := $(lastword $(MAKEFILE_LIST))
 export THIS_FILE
-TIME									:= $(shell date +%s)
+TIME                                    := $(shell date +%s)
 export TIME
-ARCH                                    := $(shell uname -m)
+
+ARCH                                    :=$(shell uname -m)
 export ARCH
-ifeq ($(user),)
-#DEFAULT to root
-HOST_USER								:= root
-HOST_UID								:= $(strip $(if $(uid),$(uid),0))
+ifeq ($(ARCH),x86_64)
+TRIPLET                                 :=x86_64-linux-gnu
+export TRIPLET
+endif
+ifeq ($(ARCH),arm64)
+TRIPLET                                 :=aarch64-linux-gnu
+export TRIPLET
+endif
+
+ifneq ($(target),)
+SERVICE_TARGET := $(target)
 else
-HOST_USER								:=  $(strip $(if $(user),$(user),nodummy))
-HOST_UID								:=  $(strip $(if $(shell id -u),$(shell id -u),4000))
+SERVICE_TARGET := ubuntu
+endif
+export SERVICE_TARGET
+
+ifeq ($(nocache),true)
+NOCACHE:=--no-cache
+endif
+ifeq ($(verbose),true)
+NOCACHE:=--verbose
+endif
+
+ifeq ($(user),root)
+HOST_USER :=root
+HOST_UID  :=$(strip $(if $(uid),$(uid),0))
+else
+#allow override by adding user= and/ or uid=  (lowercase!).
+#uid= defaults to 0 if user= set (i.e. root).
+#USER retrieved from env, UID from shell.
+HOST_USER :=$(strip $(if $(USER),$(USER),nodummy))
+HOST_UID  :=$(strip $(if $(shell id -u),$(shell id -u),4000))
 endif
 export HOST_USER
 export HOST_UID
-ifeq ($(target),)
-SERVICE_TARGET							?= statoshi
-else
-SERVICE_TARGET							:= $(target)
-endif
-export SERVICE_TARGET
-ifeq ($(docker),)
-DOCKER									:= $(shell which docker)
-else
-DOCKER   								:= $(docker)
-endif
-export DOCKER
-ifeq ($(compose),)
-DOCKER_COMPOSE							:= $(shell which docker-compose)
-else
-DOCKER_COMPOSE							:= $(compose)
-endif
-export DOCKER_COMPOSE
-ifeq ($(alpine),)
-ALPINE_VERSION							:= 3.11.6
-else
-ALPINE_VERSION							:= $(alpine)
-endif
-export ALPINE_VERSION
+
+
+PYTHON                                  := $(shell which python)
+export PYTHON
+PYTHON2                                 := $(shell which python2)
+export PYTHON2
+PYTHON3                                 := $(shell which python3)
+export PYTHON3
+
+PIP                                     := $(shell which pip)
+export PIP
+PIP2                                    := $(shell which pip2)
+export PIP2
+PIP3                                    := $(shell which pip3)
+export PIP3
+
+python_version_full                     := $(wordlist 2,4,$(subst ., ,$(shell python3 --version 2>&1)))
+python_version_major                    := $(word 1,${python_version_full})
+python_version_minor                    := $(word 2,${python_version_full})
+python_version_patch                    := $(word 3,${python_version_full})
+
+my_cmd.python.3                         := $(PYTHON3) some_script.py3
+my_cmd                                  := ${my_cmd.python.${python_version_major}}
+
+PYTHON_VERSION                          := ${python_version_major}.${python_version_minor}.${python_version_patch}
+PYTHON_VERSION_MAJOR                    := ${python_version_major}
+PYTHON_VERSION_MINOR                    := ${python_version_minor}
+
+export python_version_major
+export python_version_minor
+export python_version_patch
+export PYTHON_VERSION
+
+
+# NOTE: docker doesnt like names with dots
+# Use $(GIT_REPO_NAME) for commands that need the dotted name
+# $(PROJECT_NAME) is used in many docker commands in the GNUmakefile
 ifeq ($(project),)
-PROJECT_NAME							:= $(notdir $(PWD))
+PROJECT_NAME							:= timechain-academy#$(notdir $(PWD))
 else
 PROJECT_NAME							:= $(project)
 endif
 export PROJECT_NAME
+
+ifeq ($(user),root)
+HOST_USER := root
+HOST_UID  := $(strip $(if $(uid),$(uid),0))
+else
+#allow override by adding user= and/ or uid=  (lowercase!).
+#uid= defaults to 0 if user= set (i.e. root).
+#USER retrieved from env, UID from shell.
+HOST_USER :=  $(strip $(if $(USER),$(USER),nodummy))
+HOST_UID  :=  $(strip $(if $(shell id -u),$(shell id -u),4000))
+endif
+ifneq ($(uid),)
+HOST_UID  := $(uid)
+endif
+
+ifeq ($(ssh-pkey),)
+SSH_PRIVATE_KEY := $(HOME)/.ssh/id_rsa
+else
+SSH_PRIVATE_KEY := $(ssh-pkey)
+endif
+export SSH_PRIVATE_KEY
+
+ifeq ($(alpine),)
+ALPINE_VERSION := 3.15
+else
+ALPINE_VERSION := $(alpine)
+endif
+export ALPINE_VERSION
+
+ifeq ($(dind),)
+DIND_VERSION := 20.10.16
+else
+DIND_VERSION := $(dind)
+endif
+export DIND_VERSION
+
+ifeq ($(debian),)
+DEBIAN_VERSION := bookworm
+else
+DEBIAN_VERSION := $(debian)
+endif
+export DEBIAN_VERSION
+
+ifeq ($(ubuntu),)
+UBUNTU_VERSION := jammy
+else
+UBUNTU_VERSION := $(ubuntu)
+endif
+export UBUNTU_VERSION
+
+ifeq ($(nocache),true)
+NO_CACHE := --no-cache
+else
+NO_CACHE :=
+endif
+export NO_CACHE
+
+ifeq ($(verbose),true)
+VERBOSE := --verbose
+else
+VERBOSE :=
+endif
+export VERBOSE
+
+ifneq ($(passwd),)
+PASSWORD := $(passwd)
+else
+PASSWORD := changeme
+endif
+export PASSWORD
+
+ifneq ($(cmd),)
+CMD_ARGUMENTS := $(cmd)
+else
+CMD_ARGUMENTS :=
+endif
+export CMD_ARGUMENTS
+
+ifeq ($(private),true)
+PRIVATE := true
+else
+PRIVATE := false
+endif
+export PRIVATE
+
+DOCKER:=$(shell which docker)
+export DOCKER
+DOCKER_COMPOSE:=$(shell which docker-compose)
+export DOCKER_COMPOSE
+
+#GIT CONFIG
 GIT_USER_NAME							:= $(shell git config user.name)
 export GIT_USER_NAME
 GIT_USER_EMAIL							:= $(shell git config user.email)
 export GIT_USER_EMAIL
 GIT_SERVER								:= https://github.com
 export GIT_SERVER
-GIT_REPO_NAME							:= $(PROJECT_NAME)
+# NOTE: We use the dotted name for some commands
+# ie. ghp-import -c $(GIT_REPO_NAME) in make push-docs
+GIT_REPO_NAME							:= $(subst -,.,$(PROJECT_NAME))
 export GIT_REPO_NAME
+
+#Usage
+#make push profile=timechain-academy
+#note on GH_TOKEN.txt file below
 ifeq ($(profile),)
-#USAGE EXAMPLE: make init profile=jlopp
-GIT_PROFILE								:= bitcoincore-dev
+GIT_PROFILE								:=$(GIT_USER_NAME)
+ifeq ($(GIT_REPO_ORIGIN),git@github.com:timechain-academy/timechain.academy.git)
+GIT_PROFILE								:=timechain-academy
+endif
+ifeq ($(GIT_REPO_ORIGIN),https://github.com/$(GITHUB_USER_NAME)/timechain.academy.git)
+GIT_PROFILE								:=$(GITHUB_USER_NAME)
+endif
 else
-GIT_PROFILE								:= $(profile)
+GIT_PROFILE								:=$(profile)
 endif
 export GIT_PROFILE
-#GIT_BRANCH								:= $(shell git rev-parse --abbrev-ref HEAD)
-GIT_BRANCH								:= $(shell git rev-parse --short HEAD~0)
+
+GIT_BRANCH								:= $(shell git rev-parse --abbrev-ref HEAD)
 export GIT_BRANCH
-GIT_HASH								:= $(shell git rev-parse --short HEAD~0)
+GIT_HASH								:= $(shell git rev-parse --short HEAD)
 export GIT_HASH
-GIT_PREVIOUS_HASH						:= $(shell git rev-parse --short master@{1})
+GIT_PREVIOUS_HASH						:= $(shell git rev-parse --short HEAD^1)
 export GIT_PREVIOUS_HASH
 GIT_REPO_ORIGIN							:= $(shell git remote get-url origin)
 export GIT_REPO_ORIGIN
 GIT_REPO_PATH							:= $(HOME)/$(GIT_REPO_NAME)
 export GIT_REPO_PATH
-DOCKERFILE								:= $(PROJECT_NAME).dockerfile
-export DOCKERFILE
-DOCKERFILE_PATH							:= $(HOME)/$(PROJECT_NAME)/$(DOCKERFILE)
-export DOCKERFILE_PATH
-BITCOIN_CONF							:= $(HOME)/$(PROJECT_NAME)/conf/bitcoin.conf
-export BITCOIN_CONF
-ifeq ($(network),)
-NETWORK									:= signet
-else
-NETWORK									:= $(network)
-endif
-export NETWORK
-ifeq ($(datadir),)
-DATADIR									:= $(HOME)/.statoshi
-else
-DATADIR									:= $(datadir)
-endif
-export DATADIR
-ifeq ($(nocache),true)
-NOCACHE									:= --no-cache
-else
-NOCACHE									:=
-endif
-export NOCACHE
-ifeq ($(verbose),true)
-VERBOSE									:= --verbose
-else
-VERBOSE									:=
-endif
-export VERBOSE
-ifeq ($(port),)
-PUBLIC_PORT								:= 80
-else
-PUBLIC_PORT								:= $(port)
-endif
-export PUBLIC_PORT
-ifeq ($(nodeport),)
-NODE_PORT								:= 8333
-else
-NODE_PORT								:= $(nodeport)
-endif
-export NODE_PORT
-ifneq ($(passwd),)
-PASSWORD								:= $(passwd)
-else
-PASSWORD								:= changeme
-endif
-export PASSWORD
-ifeq ($(cmd),)
-CMD_ARGUMENTS							:=
-else
-CMD_ARGUMENTS							:= $(cmd)
-endif
-export CMD_ARGUMENTS
-PACKAGE_PREFIX							:= ghcr.io
-export PACKAGE_PREFIX
 
-.PHONY: help
-help:
-	@echo ''
-	@echo '	[USAGE]:	make [BUILD] run [EXTRA_ARGUMENTS]	'
-	@echo ''
-	@echo '		make init'
-	@echo ''
-	@echo '	bitcoin commands:'
-	@echo ''
-	@echo '		make local-autogen'
-	@echo '		make local-configure'
-	@echo ''
-	@echo '	docker commands:'
-	@echo ''
-	@echo '		make build-docker'
-	@echo ''
-	@echo '		make init user=root uid=0 nocache=false verbose=true'
-	@echo ''
-	@echo '	[DEV ENVIRONMENT]:	'
-	@echo ''
-	@echo '		make build  user=root'
-	@echo '		make run    user=root'
-	@echo '		make shell  user=$(HOST_USER)'
-	@echo ''
-	@echo '	[EXTRA_ARGUMENTS]:	set build variables	'
-	@echo ''
-	@echo '		nocache=true'
-	@echo '		            	add --no-cache to docker command and apk add $(NOCACHE)'
-	@echo ''
-	@echo '		nodeport=integer'
-	@echo '		            	set NODE_PORT default 8333'
-	@echo ''
-	@echo '		            	TODO'
-	@echo ''
-	@echo '	[DOCKER COMMANDS]:	push a command to the container	'
-	@echo ''
-	@echo '		cmd=command 	'
-	@echo '		cmd="command"	'
-	@echo '		             	send CMD_ARGUMENTS to the [TARGET]'
-	@echo ''
-	@echo '	[EXAMPLE]:'
-	@echo ''
-	@echo '		make all run user=root uid=0 no-cache=true verbose=true'
-	@echo '		make report build run user=root uid=0 no-cache=true verbose=true cmd="top"'
-	@echo ''
+PORT:=8000
+export PORT
+export
+
+#REF: https://linuxize.com/post/bash-printf-command/
+#Width directive
+#Here is an example:
+#
+#printf "%20s %d\n" Mark 305
+#Copy
+#%20s means set the field at least 20 characters long. Blanks are added before the text because, by default, the output is right-justified. To align the text to left, use the - flag (%-20s).
+#
+#      Mark 305
+#
+#\\ - Displays a backslash character.
+#\b - Displays a backspace character.
+#\n - Displays a new line.
+#\r - Displays a carriage return.
+#\t - Displays a horizontal tab.
+#\v - Displays a vertical tab.
+
+
+.PHONY: - help init build serve push signin git-add
+-:
+	#NOTE: 2 hashes are detected as 1st column output with color
+	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?##/ {printf "\033[36m%-15s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
+
+help:## 	verbose help
+# help:print help
+# 	test
+# 		test
+# 			test
+# 				test
+# 	test:test
+# 		test:test
+# 			test:test
+# 				test:test
+# 	test:	test
+# 		test:		test
+# 			test:			test
+# 				test:				test
+## help:print help
+## 	test
+## 		test
+## 			test
+## 				test
+## 	test:test
+## 		test:test
+## 			test:test
+## 				test:test
+## 	test:	test
+## 		test:		test
+## 			test:			test
+## 				test:				test
+### help:print help
+### 	test
+### 		test
+### 			test
+### 				test
+### 	test:test
+### 		test:test
+### 			test:test
+### 				test:test
+### 	test:	test
+### 		test:		test
+### 			test:			test
+### 				test:				test
+	@sed -n 's/^# //p' ${MAKEFILE_LIST} | column -t -s ':' |  sed -e 's/^/# /'
+	@sed -n 's/^## //p' ${MAKEFILE_LIST} | column -t -s ':' |  sed -e 's/^/## /'
+	@sed -n 's/^### //p' ${MAKEFILE_LIST} | column -t -s ':' |  sed -e 's/^/### /'
+
 .PHONY: report
-report:
+report:## 	report
 	@echo ''
 	@echo '	[ARGUMENTS]	'
 	@echo '      args:'
-	@echo '        - HOME=${HOME}'
-	@echo '        - PWD=${PWD}'
-	@echo '        - UMBREL=${UMBREL}'
 	@echo '        - THIS_FILE=${THIS_FILE}'
 	@echo '        - TIME=${TIME}'
-	@echo '        - PACKAGE_PREFIX=${PACKAGE_PREFIX}'
-	@echo '        - ARCH=${ARCH}'
-	@echo '        - HOST_USER=${HOST_USER}'
-	@echo '        - HOST_UID=${HOST_UID}'
-	@echo '        - PUBLIC_PORT=${PUBLIC_PORT}'
-	@echo '        - NODE_PORT=${NODE_PORT}'
-	@echo '        - SERVICE_TARGET=${SERVICE_TARGET}'
-	@echo '        - ALPINE_VERSION=${ALPINE_VERSION}'
 	@echo '        - PROJECT_NAME=${PROJECT_NAME}'
-	@echo '        - DOCKER_BUILD_TYPE=${DOCKER_BUILD_TYPE}'
-	@echo '        - DOCKER_COMPOSE=${DOCKER_COMPOSE}'
-	@echo '        - DOCKERFILE=${DOCKERFILE}'
-	@echo '        - DOCKERFILE_BODY=${DOCKERFILE_BODY}'
+	@echo '        - HOME=${HOME}'
+	@echo '        - PWD=${PWD}'
+	@echo '        - PYTHON=${PYTHON}'
+	@echo '        - PYTHON3=${PYTHON3}'
+	@echo '        - PYTHON_VERSION=${PYTHON_VERSION}'
+	@echo '        - PYTHON_VERSION_MAJOR=${PYTHON_VERSION_MAJOR}'
+	@echo '        - PYTHON_VERSION_MINOR=${PYTHON_VERSION_MINOR}'
+	@echo '        - PIP=${PIP}'
+	@echo '        - PIP3=${PIP3}'
+	@echo '        - ARCH=${ARCH}'
+	@echo '        - TRIPLET=${TRIPLET}'
+	@echo '        - PORT=${PORT}'
 	@echo '        - GIT_USER_NAME=${GIT_USER_NAME}'
 	@echo '        - GIT_USER_EMAIL=${GIT_USER_EMAIL}'
 	@echo '        - GIT_SERVER=${GIT_SERVER}'
@@ -207,202 +318,205 @@ report:
 	@echo '        - GIT_REPO_ORIGIN=${GIT_REPO_ORIGIN}'
 	@echo '        - GIT_REPO_NAME=${GIT_REPO_NAME}'
 	@echo '        - GIT_REPO_PATH=${GIT_REPO_PATH}'
-	@echo '        - DOCKERFILE=${DOCKERFILE}'
-	@echo '        - DOCKERFILE_PATH=${DOCKERFILE_PATH}'
-	@echo '        - BITCOIN_CONF=${BITCOIN_CONF}'
-	@echo '        - NETWORK=${NETWORK}'
-	@echo '        - DATADIR=${DATADIR}'
-	@echo '        - NOCACHE=${NOCACHE}'
-	@echo '        - VERBOSE=${VERBOSE}'
-	@echo '        - NODE_PORT=${NODE_PORT}'
-	@echo '        - PASSWORD=${PASSWORD}'
-	@echo '        - CMD_ARGUMENTS=${CMD_ARGUMENTS}'
 
-#######################
+.PHONY: init initialize docs
+initialize:## 	initialize
+	./scripts/initialize
+	test ./sources/playground/docker/scripts/initialize && ./sources/playground/docker/scripts/initialize || echo "Try: `make resources`"
+init: initialize## 	init
+	python3 -m pip install -r sources/requirements.txt
 
-ORIGIN_DIR:=$(PWD)
-MACOS_TARGET_DIR:=/var/root/$(PROJECT_NAME)
-LINUX_TARGET_DIR:=/root/$(PROJECT_NAME)
-export ORIGIN_DIR
-export TARGET_DIR
+docs:## 	docs
+	$(DOCKER_COMPOSE) $(VERBOSE) -p $(PROJECT_NAME)_$(HOST_UID) build $(NOCACHE)  docs
+	# $(DOCKER_COMPOSE) $(VERBOSE) run --rm --publish 18000:18000  docs
+	#$(DOCKER_COMPOSE) $(VERBOSE) run -d --rm docs
+	$(DOCKER_COMPOSE) $(VERBOSE) up -d
 
-.PHONY: super
-super:
-ifneq ($(shell id -u),0)
-	@echo switch to superuser
-	@echo cd $(TARGET_DIR)
-	#sudo ln -s $(PWD) $(TARGET_DIR)
-#.ONESHELL:
-	sudo -s
-endif
-#######################
-#######################
-# Backup $HOME/.bitcoin
-########################
-#backup:
-#	@echo ''
-#	bash -c 'mkdir -p $(HOME)/.bitcoin'
-##	bash -c 'conf/get_size.sh'
-#	bash -c 'tar czv --exclude=*.log --exclude=banlist.dat \
-#			--exclude=fee_exstimates.dat --exclude=mempool.dat \
-#			--exclude=peers.dat --exclude=.cookie --exclude=database \
-#			--exclude=.lock --exclude=.walletlock --exclude=.DS_Store\
-#			-f $(HOME)/.bitcoin-$(TIME).tar.gz $(HOME)/.bitcoin'
-#	bash -c 'openssl md5 $(HOME)/.bitcoin-$(TIME).tar.gz > $(HOME)/bitcoin-$(TIME).tar.gz.md5'
-#	bash -c 'openssl md5 -c $(HOME)/bitcoin-$(TIME).tar.gz.md5'
-#
-#
-#	@echo ''
-#######################
-# Some initial setup
-########################
-#######################
 
-.PHONY: host
-host:
-	@echo 'host'
-	bash -c './host'
+run: docs shell
+	$(NOHUP) $(DOCKER_COMPOSE) $(VERBOSE) up &
 
-#######################
-.PHONY: init
+
+
+.PHONY: clean-resources clean sources resources
+clean-sources: 	clean sources
+clean:## 	clean
+	rm -rf sources/playground/docker
+	rm -rf sources/git
+	rm -rf sources/ide
+	rm -rf sources/books/bitcoinbook
+	rm -rf sources/books/lnbook
+	rm -rf sources/books/python
+	rm -rf sources/qt/webengine
+	rm -f  *.log
+
 .SILENT:
-init:
-	git config --global core.editor vim
-	docker pull docker.io/graphiteapp/graphite-statsd:latest
-	docker pull ghcr.io/bitcoincore-dev/statoshi/$(ARCH)/root:latest
-ifneq ($(shell id -u),0)
-	sudo bash -c 'mkdir -p /usr/local/include/'
-	sudo bash -c 'install -v $(PWD)/src/statsd_client.h		    /usr/local/include/statsd_client.h'
-	sudo bash -c 'install -v $(PWD)/src/statsd_client.cpp		/usr/local/include/statsd_client.cpp'
-endif
-	rm -f Makefile
-#######################
-.PHONY: local-autogen
-local-autogen:
-	./autogen.sh
-.PHONY: local-configure
-local-configure:
-	./configure  --disable-wallet --disable-tests --disable-hardening --disable-man --enable-util-cli --enable-util-tx --with-gui=no --disable-bench
-.PHONY: signin
-signin:
-	bash -c 'cat ~/GH_TOKEN.txt | docker login ghcr.io -u RandyMcMillan --password-stdin'
-	docker tag $(PROJECT_NAME):$(HOST_USER) $(PACKAGE_PREFIX)/$(GIT_PROFILE)/$(PROJECT_NAME)/$(ARCH)/$(HOST_USER)
+sources: resources## 	sources
+resources:
+	( \
+	    rm -f resources.log; \
+	    tail resources.log & \
+	    echo $(TIME) > resources.log; \
+	    $(MAKE) playground; \
+	    $(MAKE) qt-webengine; \
+	    $(MAKE) books; \
+	);
 
-.PHONY: build build-docker
-build: build-docker
-build-docker:
-	@echo 'build'
-	#$(DOCKER_COMPOSE) $(VERBOSE) build --pull $(NOCACHE) statoshi
-	$(DOCKER_COMPOSE) $(VERBOSE) build $(NOCACHE) statoshi
-	@echo ''
-#######################
-.PHONY: run
-run: init
-	@echo 'run'
-ifeq ($(CMD_ARGUMENTS),)
-	@echo ''
-	$(DOCKER_COMPOSE) $(VERBOSE) -p $(PROJECT_NAME)_$(HOST_UID) run -d statoshi sh
-	#$(DOCKER_COMPOSE) $(VERBOSE) -p $(PROJECT_NAME)_$(HOST_UID) run -d --publish 8125:8125 --publish 8126:8126 --publish 8333:8333 --publish 8332:8332 statoshi sh
-	@echo ''
+playground:## 	clone-playground
+	git clone --progress --verbose --depth 1 -b master https://github.com/PLEBNET-PLAYGROUND/plebnet-playground-docker.git   \
+        sources/playground/docker \
+		>> resources.log 2>&1 \
+        || >>  resources.log 2>&1
+qt-webengine:## 	qt webengine
+	git clone --progress --verbose --depth 1 -b v5.15.5-lts git://code.qt.io/qt/qtwebengine.git                             \
+        sources/qt/webengine \
+		>> resources.log 2>&1 \
+        || >> resources.log 2>&1
+	git clone --progress --verbose --depth 1 -b v5.15.2 git://code.qt.io/qt/qtwebengine-chromium.git                        \
+        sources/qt/webengine/src/3rdparty/qtwebengine-chromium \
+		>> resources.log 2>&1 \
+        || >> resources.log 2>&1
+
+clean-books:## 	clean
+	rm -rf sources/books/bitcoinbook
+	rm -rf sources/books/lnbook
+	rm -rf sources/books/python
+	rm -rf sources/books/*.html
+	# $(MAKE) books
+books: mastering-bitcoin mastering-lightning python
+	mkdir -p sources/books
+	apt install pandoc || brew install pandoc
+	#bash -c "if hash pandoc 2>/dev/null; then echo; fi || brew or apt install pandoc"
+	#bash -c 'pandoc -s sources/books/README.md -o sources/books/index.html  --metadata title="" '
+	apt install asciidoctor || brew install asciidoctor
+ifeq ($(PRIVATE),true)
+	pushd sources/books/bitcoinbook > /dev/null; for string in *.asciidoc; do echo "$$string"; done; popd || echo "."
+	pushd sources/books/bitcoinbook > /dev/null; for string in *.md; do sed 's/asciidoc/html/g' $$string | tee $$string; done; popd || echo "....."
+	pushd sources/books/bitcoinbook > /dev/null; for string in *.asciidoc; do asciidoctor $$string; done; popd || echo "..."
+	pushd sources/books/lnbook      > /dev/null; for string in *.asciidoc; do echo "$$string"; done; popd || echo "...."
+	pushd sources/books/lnbook      > /dev/null; for string in *.md; do sed 's/asciidoc/html/g' $$string | tee $$string; done; popd || echo "....."
+	pushd sources/books/lnbook      > /dev/null; for string in *.asciidoc; do asciidoctor $$string; done; popd || echo "......"
+endif
+
+mastering-bitcoin:## 	mastering bitcoin
+ifeq ($(PRIVATE),true)
+	git clone --progress --verbose --depth 1 -b 1653630097/6f13274/77b91b1 https://github.com/randymcmillan/bitcoinbook.git \
+        sources/books/bitcoinbook \
+		>> resources.log 2>&1 \
+        || >> resources.log 2>&1
 else
-	@echo ''
-	$(DOCKER_COMPOSE) $(VERBOSE) -p $(PROJECT_NAME)_$(HOST_UID) run -d statoshi sh -c "$(CMD_ARGUMENTS)"
-	#$(DOCKER_COMPOSE) $(VERBOSE) -p $(PROJECT_NAME)_$(HOST_UID) run -d --publish 8125:8125 --publish 8126:8126 --publish 8333:8333 --publish 8332:8332 statoshi sh -c "$(CMD_ARGUMENTS)"
-	@echo ''
+	rm -rf sources/books/bitcoinbook
+	rm -rf docs/books/bitcoinbook
 endif
-#######################
-.PHONY: torproxy
-torproxy:
-	@echo ''
-	#REF: https://hub.docker.com/r/dperson/torproxy
-	bash -c 'docker run -it -p 8118:8118 -p 9050:9050 -p 9051:9051 -d dperson/torproxy'
-	@echo ''
-ifneq ($(shell id -u),0)
-	bash -c 'sudo make torproxy user=root &'
-endif
-ifeq ($(CMD_ARGUMENTS),)
-	$(DOCKER_COMPOSE) $(VERBOSE) -f docker-compose.yml -p $(PROJECT_NAME)_$(HOST_UID) run --publish 8118:8118 --publish 9050:9050  --publish 9051:9051 --rm torproxy
+mastering-lightning:## 	mastering lightning
+ifeq ($(PRIVATE),true)
+	git clone --progress --verbose --depth 1 https://github.com/lnbook/lnbook.git                                           \
+        sources/books/lnbook \
+		>> resources.log 2>&1 \
+        || >> resources.log 2>&1
 else
-	$(DOCKER_COMPOSE) $(VERBOSE) -f docker-compose.yml -p $(PROJECT_NAME)_$(HOST_UID) run --publish 8118:8118 --publish 9050:9050  --publish 9051:9051 --rm torproxy sh -c "$(CMD_ARGUMENTS)"
+	rm -rf sources/books/lnbook
+	rm -rf docs/books/lnbook
 endif
-	@echo ''
-#######################
-.PHONY: clean
-clean:
-	# remove created images
-	@$(DOCKER_COMPOSE) -p $(PROJECT_NAME)_$(HOST_UID) down --remove-orphans --rmi all 2>/dev/null \
-	&& echo 'Image(s) for "$(PROJECT_NAME):$(HOST_USER)" removed.' \
-	|| echo 'Image(s) for "$(PROJECT_NAME):$(HOST_USER)" already removed.'
-	@rm -f Makefile
-#######################
-.PHONY: prune
-prune:
-	@echo 'prune'
-	$(DOCKER_COMPOSE) -p $(PROJECT_NAME)_$(HOST_UID) down
-	docker system prune -f
-#######################
-.PHONY: prune-network
-prune-network:
-	@echo 'prune-network'
-	$(DOCKER_COMPOSE) -p $(PROJECT_NAME)_$(HOST_UID) down
-	docker network prune -f
-#######################
-.PHONY: docs
-statoshi-docs:
-#$ make report no-cache=true verbose=true cmd='make doc' user=root doc
-#SHELL := /bin/bash
-	@echo 'docs'
-	#bash -c "if pgrep MacDown; then pkill MacDown; fi"
-	bash -c "touch $(PWD)/docker/README.md"
-	curl -o $(PWD)/docker/README.md  https://raw.githubusercontent.com/jlopp/statoshi/master/README.md
-	bash -c "cat $(PWD)/docker/README.md"
-	bash -c "cat $(PWD)/docker/README.md >  README.md"
-	bash -c "echo ' ' >> README.md"
-	#bash -c "echo '<insert string>' >> README.md"
-	bash -c "echo '----' >> README.md"
-	bash -c "cat $(PWD)/docker/DOCKER.md >> README.md"
-	#bash -c "echo '## [$(PROJECT_NAME)]($(GIT_SERVER)/$(GIT_PROFILE)/$(PROJECT_NAME)) ' >> README.md"
-	bash -c "echo '##### &#36; <code>make</code>' >> README.md"
-	bash -c "make help >> README.md"
-	#bash -c "if hash open 2>/dev/null; then open README.md; fi || echo failed to open README.md"
-.PHONY: push
+python:## 	python
+ifeq ($(PRIVATE),true)
+	git clone --progress --verbose --depth 1 https://github.com/kyclark/tiny_python_projects.git                             \
+        sources/books/python \
+		>> resources.log 2>&1 \
+        || >> resources.log 2>&1
+else
+	rm -rf sources/books/python
+	rm -rf docs/books/python
+endif
+
+.PHONY: build serve build-readme build-shell shell shell-test
+build-readme:## 	build-readme
+	cat sources/HEADER.md >  sources/README.md
+	#echo '```' >> README.md
+	make help > sources/COMMANDS.md
+	#echo '```' >> README.md
+	cat sources/FOOTER.md >> sources/README.md
+	# bash -c "if hash pandoc 2>/dev/null; then echo; fi || brew or apt install pandoc"
+	# bash -c 'pandoc -s README.md -o index.html  --metadata title="" '
+build-docs: build-readme## 	build mkdocs
+	$(MAKE) resources
+	mkdir -p docs
+	apt install pandoc || brew install pandoc
+	apt install asciidoctor || brew install asciidoctor
+ifeq ($(PRIVATE),true)
+	pushd sources/books/bitcoinbook > /dev/null; for string in *.asciidoc; do echo "$$string"; done; popd || echo "."
+	pushd sources/books/bitcoinbook > /dev/null; for string in *.md; do sed 's/asciidoc/html/g' $$string | tee $$string; done; popd || echo "....."
+	pushd sources/books/bitcoinbook > /dev/null; for string in *.asciidoc; do asciidoctor --doctype=book $$string; done; popd || echo "..."
+	pushd sources/books/lnbook      > /dev/null; for string in *.asciidoc; do echo "$$string"; done; popd || echo "...."
+	pushd sources/books/lnbook      > /dev/null; for string in *.md; do sed 's/asciidoc/html/g' $$string | tee $$string; done; popd || echo "....."
+	pushd sources/books/lnbook      > /dev/null; for string in *.asciidoc; do asciidoctor --doctype book $$string; done; popd || echo "......"
+endif
+	mkdocs $(VERBOSE) build
+
+build-playground:## 	build-playground
+	pushd sources/playground/docker && make initialize init build && popd
+
+run-playground:## 	run-playground
+	pushd sources/playground/docker && make install && popd
+
+run-playground-cluster:## 	run-playground-cluster
+	pushd sources/playground/docker && make install-cluster && popd
+
+serve: build## 	serve mkdocs
+	$(NOHUP) mkdocs serve & open http://127.0.0.1:$(PORT) || open http://127.0.0.1:$(PORT)
+	#$(PYTHON3) -m http.server $(PORT) --bind 127.0.0.1 -d $(PWD)/docs > /dev/null 2>&1 || open http://127.0.0.1:$(PORT)
+
+build-shell:## 	build the ubuntu docker image
+	docker-compose build $(NOCACHE) $(VERBOSE) ${SERVICE_TARGET} &
+
+.PHONY: shell
+shell: build-shell## 	run the ubuntu docker environment
+ifeq ($(CMD_ARGUMENTS),)
+	$(DOCKER_COMPOSE) $(VERBOSE) -p $(PROJECT_NAME)_$(HOST_UID) run -it --rm ${SERVICE_TARGET} bash
+else
+	$(DOCKER_COMPOSE) $(VERBOSE) -p $(PROJECT_NAME)_$(HOST_UID) run -it --rm $(SERVICE_TARGET) bash -c "$(CMD_ARGUMENTS)"
+endif
+
+shell-test:## 	shell-test
+	docker-compose -p $(PROJECT_NAME)_$(HOST_UID) run --rm ${SERVICE_TARGET} sh -c "curl -fsSL https://raw.githubusercontent.com/timechain-academy/timechain.academy/master/scripts/shell-test"
+
+#shell-network-test:## 	shell-network-test
+#	docker-compose -p $(PROJECT_NAME)_$(HOST_UID) run --rm ${SERVICE_TARGET} bash -c "curl -fsSL https://raw.githubusercontent.com/timechain-academy/timechain.academy/master/scripts/shell-network-test"
+
+push-docs: ## 	ghp-import to deploy docs folder
+	# NOTES: The docs folder becomes the root on the gh-pages branch
+	# NOTES: In the github.com pages setting use branch: gh-pages / (root)
+	ghp-import -n \
+        -m "$(TIME):Deployed by $(GIT_USER_NAME) commit: $(GIT_HASH)" \
+        -c $(GIT_REPO_NAME) \
+        -p \
+        -r origin \
+        -b gh-pages \
+        docs
+
+
 push:
-	@echo 'push'
-	#bash -c "git reset --soft HEAD~1 || echo failed to add docs..."
-	#bash -c "git add README.md docker/README.md docker/DOCKER.md *.md docker/*.md || echo failed to add docs..."
-	#bash -c "git commit --amend --no-edit --allow-empty -m '$(GIT_HASH)'          || echo failed to commit --amend --no-edit"
-	#bash -c "git commit         --no-edit --allow-empty -m '$(GIT_PREVIOUS_HASH)' || echo failed to commit --amend --no-edit"
-	bash -c "git push -f --all git@github.com:$(GIT_PROFILE)/$(PROJECT_NAME).git || echo failed to push docs"
-.PHONY: push-docs
-push-docs: docs push
-	@echo 'push-docs'
-#######################
-package-statoshi: init signin
-	#@echo "legit . -m "$(HOST_USER):$(TIME)" -p 0000000 && make user=root package && GPF"
-	bash -c 'cat ~/GH_TOKEN.txt | docker login ghcr.io -u RandyMcMillan --password-stdin'
-	bash -c 'docker tag $(PROJECT_NAME):$(HOST_USER) ghcr.io/$(GIT_PROFILE)/$(PROJECT_NAME)/$(ARCH)/$(HOST_USER):$(TIME)'
-	bash -c 'docker push                             ghcr.io/$(GIT_PROFILE)/$(PROJECT_NAME)/$(ARCH)/$(HOST_USER):$(TIME)'
-	bash -c 'docker tag $(PROJECT_NAME):$(HOST_USER) ghcr.io/$(GIT_PROFILE)/$(PROJECT_NAME)/$(ARCH)/$(HOST_USER)'
-	bash -c 'docker push                             ghcr.io/$(GIT_PROFILE)/$(PROJECT_NAME)/$(ARCH)/$(HOST_USER)'
-#
-#	touch TIME && echo $(TIME) > TIME && git add -f TIME
-#	#legit . -m "make package-header at $(TIME)" -p 00000
-#	git commit --amend --no-edit --allow-empty
-#	bash -c 'docker tag $(PROJECT_NAME):$(HOST_USER) $(PACKAGE_PREFIX)/$(GIT_PROFILE)/$(PROJECT_NAME)/$(ARCH)/$(HOST_USER):$(TIME)'
-#	bash -c 'docker push                             $(PACKAGE_PREFIX)/$(GIT_PROFILE)/$(PROJECT_NAME)/$(ARCH)/$(HOST_USER):$(TIME)'
-#	bash -c 'docker tag $(PROJECT_NAME):$(HOST_USER) $(PACKAGE_PREFIX)/$(GIT_PROFILE)/$(PROJECT_NAME)/$(ARCH)/$(HOST_USER)' #defaults to latest
-#	bash -c 'docker push                             $(PACKAGE_PREFIX)/$(GIT_PROFILE)/$(PROJECT_NAME)/$(ARCH)/$(HOST_USER)'
+	@echo push
+	$(MAKE) docs
+	git checkout -b $(TIME)/$(GIT_PREVIOUS_HASH)/$(GIT_HASH)
+	git push --set-upstream origin $(TIME)/$(GIT_PREVIOUS_HASH)/$(GIT_HASH)
+	#git add docs
+	#git commit --no-edit --allow-empty -m "$(TIME)" || echo failed to commit --amend --no-edit
+	git push -f origin $(TIME)/$(GIT_PREVIOUS_HASH)/$(GIT_HASH):$(TIME)/$(GIT_PREVIOUS_HASH)/$(GIT_HASH)
 
-########################
-.PHONY: package-build-all
-package-build-all: init signin package-statoshi
+push-all: push-to-master push-docs#push-to-main ## 	push-to-master push-docs
+push-to-master:## 	push-to-master
+	git push -f  $(GIT_REPO_ORIGIN) $(GIT_BRANCH):master || echo failed to push docs
+push-to-main:## 	push-to-main
+	git push -f  $(GIT_REPO_ORIGIN) $(GIT_BRANCH):main || echo failed to push docs
 
-	make build-docker package-statoshi
 
-########################
-.PHONY: automate
-automate:
-	./.github/workflows/automate.sh
+SIGNIN=randymcmillan
+export SIGNIN
+
+signin:
+#Place a file named GH_TOKEN.txt in your $HOME - create in https://github.com/settings/tokens (Personal access tokens)
+	bash -c 'cat ~/GH_TOKEN.txt | docker login ghcr.io -u $(GIT_PROFILE) --password-stdin'
+
 #-include funcs.mk
 -include Makefile
-
