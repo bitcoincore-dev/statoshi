@@ -112,10 +112,14 @@ COPY docker/bin /usr/local/bin
 COPY docker/opt/healthcheck.sh /opt/healthcheck.sh
 
 WORKDIR /home/${HOST_USER}/statoshi
+CMD [ "apt-get instal pkg-config" ]
 CMD [ "./autogen.sh" ]
+# RUN ./autogen.sh
 # CMD [ " CONFIG_SITE=$PWD/depends/aarch64-linux-gnu/share/config.site","./configure ", " --disable-wallet", "--disable-tests ", "--disable-bench", "--disable-man", "--with-gui=no", "--enable-reduce-exports", "LDFLAGS=-static-libstdc++" ]
-CMD [ "./configure ", " --disable-wallet", "--disable-tests ", "--disable-bench", "--disable-man", "--with-gui=no", "--enable-reduce-exports", "LDFLAGS=-static-libstdc++" ]
-CMD [ "make", "check" ]
+# CMD [ "./configure ", " --disable-wallet", "--disable-tests ", "--disable-bench", "--disable-man", "--with-gui=no", "--enable-reduce-exports", "LDFLAGS=-static-libstdc++" ]
+# CMD [ "./configure ", " --disable-wallet", "--disable-tests ", "--disable-bench", "--disable-man", "--with-gui=no" ]
+# RUN ./configure --disable-wallet --disable-tests --disable-bench --disable-man --with-gui=no
+# CMD [ "make", "check" ]
 CMD [ "ssh-agent" ]
 HEALTHCHECK --interval=5s --timeout=1s --retries=3 CMD ["/opt/healthcheck.sh"]
 
