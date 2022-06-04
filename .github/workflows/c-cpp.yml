@@ -79,6 +79,10 @@ jobs:
         binutils-riscv64-linux-gnu \
         g++-riscv64-linux-gnu # \
         # g++-mingw-w64-x86-64-posix
+    - name: install statsd
+      run: |
+        install -v ./src/statsd_client.h   /usr/local/include/
+        install -v ./src/statsd_client.cpp /usr/local/include/
     - name: autogen.sh
       run: |
         ./autogen.sh
