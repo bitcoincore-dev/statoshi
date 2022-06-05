@@ -83,7 +83,7 @@ export PYTHON_VERSION
 # Use $(GIT_REPO_NAME) for commands that need the dotted name
 # $(PROJECT_NAME) is used in many docker commands in the GNUmakefile
 ifeq ($(project),)
-PROJECT_NAME							:= timechain-academy#$(notdir $(PWD))
+PROJECT_NAME							:= $(notdir $(PWD))
 else
 PROJECT_NAME							:= $(project)
 endif
@@ -307,6 +307,7 @@ report:## 	report
 	@echo '        - PIP3=${PIP3}'
 	@echo '        - ARCH=${ARCH}'
 	@echo '        - TRIPLET=${TRIPLET}'
+	@echo '        - UBUNTU_VERSION=${UBUNTU_VERSION}'
 	@echo '        - PORT=${PORT}'
 	@echo '        - GIT_USER_NAME=${GIT_USER_NAME}'
 	@echo '        - GIT_USER_EMAIL=${GIT_USER_EMAIL}'
@@ -326,14 +327,7 @@ initialize:## 	initialize
 init: initialize## 	init
 	python3 -m pip install -r sources/requirements.txt
 
-docs:## 	docs
-	$(DOCKER_COMPOSE) $(VERBOSE) -p $(PROJECT_NAME)_$(HOST_UID) build $(NOCACHE)  docs
-	# $(DOCKER_COMPOSE) $(VERBOSE) run --rm --publish 18000:18000  docs
-	#$(DOCKER_COMPOSE) $(VERBOSE) run -d --rm docs
-	$(DOCKER_COMPOSE) $(VERBOSE) up -d
-
-
-run: docs shell
+run: shell
 	$(NOHUP) $(DOCKER_COMPOSE) $(VERBOSE) up &
 
 
