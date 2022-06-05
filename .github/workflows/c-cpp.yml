@@ -166,6 +166,7 @@ jobs:
         sudo make install
     - name: make build-shell
       run: |
+        make && \
         echo ${{ secrets.GITHUB_TOKEN }} | docker login docker.pkg.github.com -u $GITHUB_ACTOR --password-stdin
         UBUNTU_VERSION=jammy docker pull docker.pkg.github.com/$GITHUB_REPOSITORY/build-cache-no-buildkit || true
         docker build -f docker/ubuntu.dockerfile . -t thing --cache-from=docker.pkg.github.com/$GITHUB_REPOSITORY/build-cache-no-buildkit
