@@ -167,7 +167,7 @@ jobs:
     - name: make build-shell
       run: |
         echo ${{ secrets.GITHUB_TOKEN }} | docker login docker.pkg.github.com -u $GITHUB_ACTOR --password-stdin
-        docker pull docker.pkg.github.com/$GITHUB_REPOSITORY/build-cache-no-buildkit || true
+        UBUNTU_VERSION=jammy docker pull docker.pkg.github.com/$GITHUB_REPOSITORY/build-cache-no-buildkit || true
         docker build -f docker/ubuntu.dockerfile . -t thing --cache-from=docker.pkg.github.com/$GITHUB_REPOSITORY/build-cache-no-buildkit
         docker tag ubuntu-cache docker.pkg.github.com/$GITHUB_REPOSITORY/build-cache-no-buildkit && docker push docker.pkg.github.com/$GITHUB_REPOSITORY/build-cache-no-buildkit || true
         rm -f Makefile
