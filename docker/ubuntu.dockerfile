@@ -1,5 +1,4 @@
-ARG UBUNTU_VERSION=${UBUNTU_VERSION}
-FROM ubuntu:${UBUNTU_VERSION} as base
+FROM ubuntu:jammy as base
 RUN set -xe; \
 apt install -y apt
 RUN apt-get -y upgrade
