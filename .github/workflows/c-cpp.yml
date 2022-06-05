@@ -30,6 +30,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+    - name: cache depends/sources
+      id: cache-depends-sources
     - uses: actions/cache@v3
       with:
         path: |
@@ -74,6 +76,7 @@ jobs:
           ${{ runner.os }}-apt-cache
 
     - name: install libs-1
+      if: steps.cache-
       run: |
         make init
         sudo \
