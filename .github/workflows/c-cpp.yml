@@ -75,6 +75,7 @@ jobs:
           ${{ runner.os }}-src-a
 
     - uses: actions/cache@v3
+      id: apt-cache
       with:
         path: |
           ${{ github.workspace }}/var/cache/apt/archives
@@ -83,7 +84,7 @@ jobs:
           ${{ runner.os }}-apt-cache
 
     - name: install libs-1
-      if: steps.cache-
+      if: steps.apt-cache.outputs.cache-hit != 'true'
       run: |
         make init
         sudo \
@@ -124,6 +125,7 @@ jobs:
         # Split cross-compilers out.
         # apt cant install everything at once
     - name: install libs-2
+      if: steps.apt-cache.outputs.cache-hit != 'true'
       run: |
         sudo \
         apt-get install --no-install-recommends -y \
