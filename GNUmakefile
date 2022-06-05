@@ -322,143 +322,12 @@ report:## 	report
 
 .PHONY: init initialize docs
 initialize:## 	initialize
-	./scripts/initialize
+	docker/bin/initialize
 	test ./sources/playground/docker/scripts/initialize && ./sources/playground/docker/scripts/initialize || echo "Try: `make resources`"
 init: initialize## 	init
-	python3 -m pip install -r sources/requirements.txt
 
 run: shell
 	$(NOHUP) $(DOCKER_COMPOSE) $(VERBOSE) up &
-
-
-
-.PHONY: clean-resources clean sources resources
-clean-sources: 	clean sources
-clean:## 	clean
-	rm -rf sources/playground/docker
-	rm -rf sources/git
-	rm -rf sources/ide
-	rm -rf sources/books/bitcoinbook
-	rm -rf sources/books/lnbook
-	rm -rf sources/books/python
-	rm -rf sources/qt/webengine
-	rm -f  *.log
-
-.SILENT:
-sources: resources## 	sources
-resources:
-	( \
-	    rm -f resources.log; \
-	    tail resources.log & \
-	    echo $(TIME) > resources.log; \
-	    $(MAKE) playground; \
-	    $(MAKE) qt-webengine; \
-	    $(MAKE) books; \
-	);
-
-playground:## 	clone-playground
-	git clone --progress --verbose --depth 1 -b master https://github.com/PLEBNET-PLAYGROUND/plebnet-playground-docker.git   \
-        sources/playground/docker \
-		>> resources.log 2>&1 \
-        || >>  resources.log 2>&1
-qt-webengine:## 	qt webengine
-	git clone --progress --verbose --depth 1 -b v5.15.5-lts git://code.qt.io/qt/qtwebengine.git                             \
-        sources/qt/webengine \
-		>> resources.log 2>&1 \
-        || >> resources.log 2>&1
-	git clone --progress --verbose --depth 1 -b v5.15.2 git://code.qt.io/qt/qtwebengine-chromium.git                        \
-        sources/qt/webengine/src/3rdparty/qtwebengine-chromium \
-		>> resources.log 2>&1 \
-        || >> resources.log 2>&1
-
-clean-books:## 	clean
-	rm -rf sources/books/bitcoinbook
-	rm -rf sources/books/lnbook
-	rm -rf sources/books/python
-	rm -rf sources/books/*.html
-	# $(MAKE) books
-books: mastering-bitcoin mastering-lightning python
-	mkdir -p sources/books
-	apt install pandoc || brew install pandoc
-	#bash -c "if hash pandoc 2>/dev/null; then echo; fi || brew or apt install pandoc"
-	#bash -c 'pandoc -s sources/books/README.md -o sources/books/index.html  --metadata title="" '
-	apt install asciidoctor || brew install asciidoctor
-ifeq ($(PRIVATE),true)
-	pushd sources/books/bitcoinbook > /dev/null; for string in *.asciidoc; do echo "$$string"; done; popd || echo "."
-	pushd sources/books/bitcoinbook > /dev/null; for string in *.md; do sed 's/asciidoc/html/g' $$string | tee $$string; done; popd || echo "....."
-	pushd sources/books/bitcoinbook > /dev/null; for string in *.asciidoc; do asciidoctor $$string; done; popd || echo "..."
-	pushd sources/books/lnbook      > /dev/null; for string in *.asciidoc; do echo "$$string"; done; popd || echo "...."
-	pushd sources/books/lnbook      > /dev/null; for string in *.md; do sed 's/asciidoc/html/g' $$string | tee $$string; done; popd || echo "....."
-	pushd sources/books/lnbook      > /dev/null; for string in *.asciidoc; do asciidoctor $$string; done; popd || echo "......"
-endif
-
-mastering-bitcoin:## 	mastering bitcoin
-ifeq ($(PRIVATE),true)
-	git clone --progress --verbose --depth 1 -b 1653630097/6f13274/77b91b1 https://github.com/randymcmillan/bitcoinbook.git \
-        sources/books/bitcoinbook \
-		>> resources.log 2>&1 \
-        || >> resources.log 2>&1
-else
-	rm -rf sources/books/bitcoinbook
-	rm -rf docs/books/bitcoinbook
-endif
-mastering-lightning:## 	mastering lightning
-ifeq ($(PRIVATE),true)
-	git clone --progress --verbose --depth 1 https://github.com/lnbook/lnbook.git                                           \
-        sources/books/lnbook \
-		>> resources.log 2>&1 \
-        || >> resources.log 2>&1
-else
-	rm -rf sources/books/lnbook
-	rm -rf docs/books/lnbook
-endif
-python:## 	python
-ifeq ($(PRIVATE),true)
-	git clone --progress --verbose --depth 1 https://github.com/kyclark/tiny_python_projects.git                             \
-        sources/books/python \
-		>> resources.log 2>&1 \
-        || >> resources.log 2>&1
-else
-	rm -rf sources/books/python
-	rm -rf docs/books/python
-endif
-
-.PHONY: build serve build-readme build-shell shell shell-test
-build-readme:## 	build-readme
-	cat sources/HEADER.md >  sources/README.md
-	#echo '```' >> README.md
-	make help > sources/COMMANDS.md
-	#echo '```' >> README.md
-	cat sources/FOOTER.md >> sources/README.md
-	# bash -c "if hash pandoc 2>/dev/null; then echo; fi || brew or apt install pandoc"
-	# bash -c 'pandoc -s README.md -o index.html  --metadata title="" '
-build-docs: build-readme## 	build mkdocs
-	$(MAKE) resources
-	mkdir -p docs
-	apt install pandoc || brew install pandoc
-	apt install asciidoctor || brew install asciidoctor
-ifeq ($(PRIVATE),true)
-	pushd sources/books/bitcoinbook > /dev/null; for string in *.asciidoc; do echo "$$string"; done; popd || echo "."
-	pushd sources/books/bitcoinbook > /dev/null; for string in *.md; do sed 's/asciidoc/html/g' $$string | tee $$string; done; popd || echo "....."
-	pushd sources/books/bitcoinbook > /dev/null; for string in *.asciidoc; do asciidoctor --doctype=book $$string; done; popd || echo "..."
-	pushd sources/books/lnbook      > /dev/null; for string in *.asciidoc; do echo "$$string"; done; popd || echo "...."
-	pushd sources/books/lnbook      > /dev/null; for string in *.md; do sed 's/asciidoc/html/g' $$string | tee $$string; done; popd || echo "....."
-	pushd sources/books/lnbook      > /dev/null; for string in *.asciidoc; do asciidoctor --doctype book $$string; done; popd || echo "......"
-endif
-	mkdocs $(VERBOSE) build
-
-build-playground:## 	build-playground
-	pushd sources/playground/docker && make initialize init build && popd
-
-run-playground:## 	run-playground
-	pushd sources/playground/docker && make install && popd
-
-run-playground-cluster:## 	run-playground-cluster
-	pushd sources/playground/docker && make install-cluster && popd
-
-serve: build## 	serve mkdocs
-	$(NOHUP) mkdocs serve & open http://127.0.0.1:$(PORT) || open http://127.0.0.1:$(PORT)
-	#$(PYTHON3) -m http.server $(PORT) --bind 127.0.0.1 -d $(PWD)/docs > /dev/null 2>&1 || open http://127.0.0.1:$(PORT)
 
 build-shell:## 	build the ubuntu docker image
 	docker-compose build $(NOCACHE) $(VERBOSE) ${SERVICE_TARGET} &
@@ -477,33 +346,7 @@ shell-test:## 	shell-test
 #shell-network-test:## 	shell-network-test
 #	docker-compose -p $(PROJECT_NAME)_$(HOST_UID) run --rm ${SERVICE_TARGET} bash -c "curl -fsSL https://raw.githubusercontent.com/timechain-academy/timechain.academy/master/scripts/shell-network-test"
 
-push-docs: ## 	ghp-import to deploy docs folder
-	# NOTES: The docs folder becomes the root on the gh-pages branch
-	# NOTES: In the github.com pages setting use branch: gh-pages / (root)
-	ghp-import -n \
-        -m "$(TIME):Deployed by $(GIT_USER_NAME) commit: $(GIT_HASH)" \
-        -c $(GIT_REPO_NAME) \
-        -p \
-        -r origin \
-        -b gh-pages \
-        docs
-
-
-push:
-	@echo push
-	$(MAKE) docs
-	git checkout -b $(TIME)/$(GIT_PREVIOUS_HASH)/$(GIT_HASH)
-	git push --set-upstream origin $(TIME)/$(GIT_PREVIOUS_HASH)/$(GIT_HASH)
-	#git add docs
-	#git commit --no-edit --allow-empty -m "$(TIME)" || echo failed to commit --amend --no-edit
-	git push -f origin $(TIME)/$(GIT_PREVIOUS_HASH)/$(GIT_HASH):$(TIME)/$(GIT_PREVIOUS_HASH)/$(GIT_HASH)
-
-push-all: push-to-master push-docs#push-to-main ## 	push-to-master push-docs
-push-to-master:## 	push-to-master
-	git push -f  $(GIT_REPO_ORIGIN) $(GIT_BRANCH):master || echo failed to push docs
-push-to-main:## 	push-to-main
-	git push -f  $(GIT_REPO_ORIGIN) $(GIT_BRANCH):main || echo failed to push docs
-
+# ADD docker push...
 
 SIGNIN=randymcmillan
 export SIGNIN

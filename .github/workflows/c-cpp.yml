@@ -75,6 +75,7 @@ jobs:
 
     - name: install libs-1
       run: |
+        make init
         sudo \
         apt-get install --no-install-recommends -y \
         automake \
