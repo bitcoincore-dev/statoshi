@@ -191,14 +191,15 @@ GIT_REPO_NAME							:= $(subst -,.,$(PROJECT_NAME))
 export GIT_REPO_NAME
 
 #Usage
-#make push profile=timechain-academy
+#make push profile=bitcoincore-dev
+#make package-all profile=bitcoincore-dev
 #note on GH_TOKEN.txt file below
 ifeq ($(profile),)
 GIT_PROFILE								:=$(GIT_USER_NAME)
-ifeq ($(GIT_REPO_ORIGIN),git@github.com:timechain-academy/timechain.academy.git)
-GIT_PROFILE								:=timechain-academy
+ifeq ($(GIT_REPO_ORIGIN),git@github.com:bitcoincore-dev/$(PROJECT_NAME).git)
+GIT_PROFILE								:=bitcoinccore-dev
 endif
-ifeq ($(GIT_REPO_ORIGIN),https://github.com/$(GITHUB_USER_NAME)/timechain.academy.git)
+ifeq ($(GIT_REPO_ORIGIN),https://github.com/$(GITHUB_USER_NAME)/$(PROJECT_NAME).git)
 GIT_PROFILE								:=$(GITHUB_USER_NAME)
 endif
 else
@@ -216,6 +217,9 @@ GIT_REPO_ORIGIN							:= $(shell git remote get-url origin)
 export GIT_REPO_ORIGIN
 GIT_REPO_PATH							:= $(HOME)/$(GIT_REPO_NAME)
 export GIT_REPO_PATH
+
+PACKAGE_PREFIX                          := ghcr.io
+export PACKAGE_PREFIX
 
 PORT:=8000
 export PORT
@@ -323,21 +327,20 @@ report:## 	report
 .PHONY: init initialize docs
 initialize:## 	initialize
 	docker/bin/initialize
-	test ./sources/playground/docker/scripts/initialize && ./sources/playground/docker/scripts/initialize || echo "Try: `make resources`"
 init: initialize## 	init
 
 run: shell
-	$(NOHUP) $(DOCKER_COMPOSE) $(VERBOSE) up &
+	$(NOHUP) $(DOCKER_COMPOSE) $(VERBOSE) up -d
 
 build-shell:## 	build the ubuntu docker image
-	docker-compose build $(NOCACHE) $(VERBOSE) ${SERVICE_TARGET} &
+	$(DOCKER_COMPOSE) build $(NOCACHE) $(VERBOSE) ${SERVICE_TARGET} &
 
 .PHONY: shell
 shell: build-shell## 	run the ubuntu docker environment
 ifeq ($(CMD_ARGUMENTS),)
-	$(DOCKER_COMPOSE) $(VERBOSE) -p $(PROJECT_NAME)_$(HOST_UID) run -it --rm ${SERVICE_TARGET} bash
+	$(DOCKER_COMPOSE) $(VERBOSE) -p $(PROJECT_NAME)_$(HOST_UID) run  -it --rm ${SERVICE_TARGET} bash
 else
-	$(DOCKER_COMPOSE) $(VERBOSE) -p $(PROJECT_NAME)_$(HOST_UID) run -it --rm $(SERVICE_TARGET) bash -c "$(CMD_ARGUMENTS)"
+	$(DOCKER_COMPOSE) $(VERBOSE) -p $(PROJECT_NAME)_$(HOST_UID) run -dit --rm $(SERVICE_TARGET) bash -c "$(CMD_ARGUMENTS)"
 endif
 
 shell-test:## 	shell-test
@@ -348,12 +351,63 @@ shell-test:## 	shell-test
 
 # ADD docker push...
 
+#######################
+.PHONY: clean
+clean-statoshi:## 	clean-statoshi
+	# remove created images
+	@$(DOCKER_COMPOSE) -p $(PROJECT_NAME) down --remove-orphans --rmi all 2>/dev/null \
+	&& echo 'Image(s) for "$(PROJECT_NAME)" removed.' \
+	|| echo 'Image(s) for "$(PROJECT_NAME)" already removed.'
+#######################
+.PHONY: prune
+prune-system:## 	docker system prune -af (very destructive!)
+ifeq ($(user),root)
+	$(DOCKER_COMPOSE) -p $(PROJECT_NAME) down || true
+	docker system prune -af &
+else
+	@echo "make prune-system user=root"
+endif
+#######################
+.PHONY: prune-network
+prune-statoshi:## 	remove statoshi network
+	$(DOCKER_COMPOSE) -p $(PROJECT_NAME) down
+	docker network rm $(PROJECT_NAME)* 2>/dev/null || echo
+#######################
+.PHONY: push
+push:
+	@echo push
+	git checkout -b $(TIME)/$(GIT_PREVIOUS_HASH)/$(GIT_HASH)
+	git push --set-upstream origin $(TIME)/$(GIT_PREVIOUS_HASH)/$(GIT_HASH)
+	git add docs
+	git commit --amend --no-edit --allow-empty || echo failed to commit --amend --no-edit
+	git push -f origin $(TIME)/$(GIT_PREVIOUS_HASH)/$(GIT_HASH):$(TIME)/$(GIT_PREVIOUS_HASH)/$(GIT_HASH)
+
+.PHONY: push-docs
+push-docs: statoshi-docs push
+	@echo 'push-docs'
+
 SIGNIN=randymcmillan
 export SIGNIN
 
-signin:
+.PHONY: signin
+signin: report
 #Place a file named GH_TOKEN.txt in your $HOME - create in https://github.com/settings/tokens (Personal access tokens)
 	bash -c 'cat ~/GH_TOKEN.txt | docker login ghcr.io -u $(GIT_PROFILE) --password-stdin'
+#######################
+package-$(PROJECT_NAME): signin
 
+	#touch TIME && echo $(TIME) > TIME && git add -f TIME
+	#legit . -m "make package-header at $(TIME)" -p 00000
+	#git commit --amend --no-edit --allow-empty
+
+	bash -c 'docker tag  $(PROJECT_NAME):$(HOST_USER) $(PACKAGE_PREFIX)/$(GIT_PROFILE)/$(PROJECT_NAME)/statoshi-$(TRIPLET)/$(HOST_USER):$(TIME) || echo skip statoshi'
+	bash -c 'docker push                              $(PACKAGE_PREFIX)/$(GIT_PROFILE)/$(PROJECT_NAME)/statoshi-$(TRIPLET)/$(HOST_USER):$(TIME) || echo skip statoshi'
+
+########################
+.PHONY: package-all
+package-all: init package-$(PROJECT_NAME)
+#INSERT other scripting here
+	bash -c "echo insert more scripting here..."
+########################
 #-include funcs.mk
 -include Makefile
