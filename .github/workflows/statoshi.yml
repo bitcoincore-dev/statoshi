@@ -1,10 +1,11 @@
-name: C/C++ CI
+name: statoshi
 
 on:
   pull_request:
     branches:       #[ master ]
       - '*'         # matches every branch that doesn't contain a '/'
       - '*/*'       # matches every branch containing a single '/'
+      - '*/*/*'     # matches every branch containing a single '/'
       - '**'        # matches every branch
       - 'master'    # includes master
       - 'main'      # includes main
@@ -82,6 +83,13 @@ jobs:
         key: ${{ runner.os }}-apt-cache
         restore-keys: |
           ${{ runner.os }}-apt-cache
+
+    - name: printenv make
+      run: |
+        printenv
+        make
+        make help
+        make report
 
     - name: install libs-1
       if: steps.apt-cache.outputs.cache-hit != 'true'
@@ -184,7 +192,8 @@ jobs:
         make && \
         echo ${{ secrets.GITHUB_TOKEN }} | docker login docker.pkg.github.com -u $GITHUB_ACTOR --password-stdin
         echo ${{ secrets.GITHUB_TOKEN }} > ~/GH_TOKEN.txt
-        make package-all user=root && make package-all user=git
+        # make package-all user=root && make package-all user=git
         # UBUNTU_VERSION=jammy docker pull docker.pkg.github.com/$GITHUB_REPOSITORY/build-cache-no-buildkit || true
-        # docker build -f docker/ubuntu.dockerfile . -t thing --cache-from=docker.pkg.github.com/$GITHUB_REPOSITORY/build-cache-no-buildkit
+        # UBUNTU_VERSION=jammy docker pull docker.pkg.github.com/$GITHUB_REPOSITORY/build-cache-no-buildkit || true
+        docker build -f docker/ubuntu.dockerfile . -t thing --cache-from=docker.pkg.github.com/$GITHUB_REPOSITORY/build-cache-no-buildkit
         # docker tag ubuntu-cache docker.pkg.github.com/$GITHUB_REPOSITORY/build-cache-no-buildkit && docker push docker.pkg.github.com/$GITHUB_REPOSITORY/build-cache-no-buildkit || true
