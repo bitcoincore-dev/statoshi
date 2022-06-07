@@ -94,7 +94,8 @@ jobs:
     - name: install libs-1
       if: steps.apt-cache.outputs.cache-hit != 'true'
       run: |
-        make init
+        sudo make init initialize
+        echo "check to see what init initialize is missing!!!"
         sudo \
         apt-get install --no-install-recommends -y \
         automake \
@@ -135,6 +136,8 @@ jobs:
     - name: install libs-2
       if: steps.apt-cache.outputs.cache-hit != 'true'
       run: |
+        sudo make init initialize
+        echo "check to see what init initialize is missing!!!"
         sudo \
         apt-get install --no-install-recommends -y \
         g++-aarch64-linux-gnu \
