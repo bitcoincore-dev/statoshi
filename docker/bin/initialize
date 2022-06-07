@@ -101,7 +101,8 @@ DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC apt-get -y install tzdata
 
 if hash apt-get 2>/dev/null; then
     $SUDO apt-get update
-     $SUDO apt-get install --no-install-recommends -y \
+     # $SUDO apt-get install --no-install-recommends -y \
+     $SUDO apt-get install -y \
         automake \
         binutils \
         bsdmainutils \
