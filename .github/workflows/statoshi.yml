@@ -151,6 +151,7 @@ jobs:
         g++-arm-linux-gnueabihf binutils-arm-linux-gnueabihf \
         g++-aarch64-linux-gnu #\
         # binutils-aarch64-linux-gnu
+        sudo make init initialize
     - name: install statsd
       run: |
         sudo -s install -v ./src/statsd_client.h   /usr/local/include/
