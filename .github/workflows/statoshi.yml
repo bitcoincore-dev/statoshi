@@ -195,7 +195,7 @@ jobs:
         make build-shell user=root
         make && \
         echo ${{ secrets.GITHUB_TOKEN }} | docker login docker.pkg.github.com -u $GITHUB_ACTOR --password-stdin
-        echo ${{ secrets.GITHUB_TOKEN }} > ~/GH_TOKEN.txt
+        # echo ${{ secrets.GITHUB_TOKEN }} > ~/GH_TOKEN.txt
         # make package-all user=root && make package-all user=git
         # UBUNTU_VERSION=jammy docker pull docker.pkg.github.com/$GITHUB_REPOSITORY/build-cache-no-buildkit || true
         # UBUNTU_VERSION=jammy docker pull docker.pkg.github.com/$GITHUB_REPOSITORY/build-cache-no-buildkit || true
