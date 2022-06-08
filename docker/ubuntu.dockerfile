@@ -98,7 +98,7 @@ RUN mkdir -p /var/cache/debconf
 
 RUN if [ -r ~/.ssh/id_rsa ]; then y | ssh-keygen; fi
 
-ARG PASSWORD=${PASSWORD}
+ARG PASSWORD=changeme
 
 RUN if [ ${HOST_UID} != 0 ]; then adduser --system --disabled-password --ingroup sudo --home /home/${HOST_USER} --uid ${HOST_UID} ${HOST_USER}; fi
 RUN echo root:${PASSWORD} | chpasswd
