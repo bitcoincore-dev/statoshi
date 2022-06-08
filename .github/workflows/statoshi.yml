@@ -199,5 +199,5 @@ jobs:
         # make package-all user=root && make package-all user=git
         # UBUNTU_VERSION=jammy docker pull docker.pkg.github.com/$GITHUB_REPOSITORY/build-cache-no-buildkit || true
         # UBUNTU_VERSION=jammy docker pull docker.pkg.github.com/$GITHUB_REPOSITORY/build-cache-no-buildkit || true
-        docker build -f docker/ubuntu.dockerfile . -t thing --cache-from=docker.pkg.github.com/$GITHUB_REPOSITORY/build-cache-no-buildkit
+        sudo docker build -f docker/ubuntu.dockerfile . -t thing --cache-from=docker.pkg.github.com/$GITHUB_REPOSITORY/build-cache-no-buildkit
         # docker tag ubuntu-cache docker.pkg.github.com/$GITHUB_REPOSITORY/build-cache-no-buildkit && docker push docker.pkg.github.com/$GITHUB_REPOSITORY/build-cache-no-buildkit || true
