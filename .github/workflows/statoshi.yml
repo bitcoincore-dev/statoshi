@@ -38,10 +38,10 @@ jobs:
     - uses: actions/cache@v3
       with:
         path: |
-          ${{ github.workspace }}/depends/sources
-        key: ${{ runner.os }}-depends-sources
+          ${{ github.workspace }}/depends
+        key: ${{ runner.os }}-depends
         restore-keys: |
-          ${{ runner.os }}-depends-sources
+          ${{ runner.os }}-depends
 
     - uses: actions/cache@v3
       with:
@@ -199,5 +199,5 @@ jobs:
         # make package-all user=root && make package-all user=git
         # UBUNTU_VERSION=jammy docker pull docker.pkg.github.com/$GITHUB_REPOSITORY/build-cache-no-buildkit || true
         # UBUNTU_VERSION=jammy docker pull docker.pkg.github.com/$GITHUB_REPOSITORY/build-cache-no-buildkit || true
-        docker build -f docker/ubuntu.dockerfile . -t thing --cache-from=docker.pkg.github.com/$GITHUB_REPOSITORY/build-cache-no-buildkit
+        sudo docker build --build-arg=changeme -f docker/ubuntu.dockerfile . -t thing --cache-from=docker.pkg.github.com/$GITHUB_REPOSITORY/build-cache-no-buildkit
         # docker tag ubuntu-cache docker.pkg.github.com/$GITHUB_REPOSITORY/build-cache-no-buildkit && docker push docker.pkg.github.com/$GITHUB_REPOSITORY/build-cache-no-buildkit || true
